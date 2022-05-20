@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using PSM.Core.Core;
 using PSM.Core.Core.Auth;
 using PSM.Core.Core.Database;
 using Tomlyn.Extensions.Configuration;
@@ -38,7 +41,23 @@ namespace PSM.Core {
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<IAuthService, AuthService>();
+
+            // Setup auth
+            builder.Services.AddAuthentication(x => {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(o => {
+                o.SaveToken = true;
+                o.TokenValidationParameters = new TokenValidationParameters {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Constants.GetJWTBytes())
+                };
+            });
+
+            builder.Services.AddScoped<IJWTRepository, JWTRepository>();
 
             // Setup logging
             builder.Logging.ClearProviders();
@@ -46,7 +65,7 @@ namespace PSM.Core {
                 options.IncludeScopes = true;
                 options.TimestampFormat = "[yyyy-MM-dd hh:mm:ss] ";
             });
-            
+            // Suppress EF logs
             builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
 
             WebApplication app = builder.Build();
@@ -62,8 +81,6 @@ namespace PSM.Core {
                 } else {
                     app.Logger.LogInformation("No user seeding required.");
                 }
-                
-                // Do migration stuff here
             }
 
             // Configure the HTTP request pipeline.
@@ -72,9 +89,8 @@ namespace PSM.Core {
                 app.UseSwaggerUI();
             }
 
-            // Custom auth middleware
-            app.UseMiddleware<AuthMiddleware>();
-
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.MapControllers();
 
             app.Logger.LogInformation("Finished initial startup");

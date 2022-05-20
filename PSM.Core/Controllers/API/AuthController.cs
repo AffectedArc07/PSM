@@ -2,12 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using PSM.Core.Core.Database;
 using PSM.Core.Models;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Security.Cryptography;
 using PSM.Core.Core.Auth;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,13 +12,17 @@ namespace PSM.Core.Controllers.API {
     public class AuthController : Controller {
         private readonly PSMContext dbc;
         private readonly PasswordHasher<User> hasher;
-        private readonly IAuthService auth;
-        public AuthController(PSMContext _dbc, IAuthService _auth) {
+        private readonly IJWTRepository auth;
+        public AuthController(PSMContext _dbc, IJWTRepository _auth) {
             dbc = _dbc;
             hasher = new PasswordHasher<User>();
             auth = _auth;
         }
 
+        /// <summary>
+        /// Takes a username and password using basic auth, and will return a token and expiration timestamp.
+        /// </summary>
+        /// <returns>A token response or reason for token refusal</returns>
         [HttpPost]
         [Route("login")]
         [ProducesResponseType(typeof(TokenResponseModel), 200)]
@@ -72,15 +72,8 @@ namespace PSM.Core.Controllers.API {
             }
 
             // Now generate a JWT
-            TokenResponseModel trm = auth.CreateJWT(target_user);
+            TokenResponseModel trm = auth.Authenticate(target_user);
             return Ok(trm);
-        }
-
-        [PSMAuth]
-        [HttpGet("authtest")]
-        public IActionResult AuthTest() {
-            User user = auth.UserFromContext(HttpContext);
-            return Ok(string.Format("Hello {0}", user.Username));
         }
     }
 }
