@@ -8,7 +8,7 @@ namespace PSM.Core.Controllers {
     public class RootController : Controller {
         [HttpGet]
         public IActionResult Index() {
-            return View();
+            return NotFound("TODO"); // View(); TODO
         }
     }
 }
