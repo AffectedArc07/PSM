@@ -26,7 +26,7 @@ namespace PSM.Core.Core.Auth {
                                                                                                new Claim("id", user.Id.ToString())
                                                                                              }),
                                                           Expires            = expirationTime,
-                                                          SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Constants.GetJWTBytes()), SecurityAlgorithms.HmacSha256Signature)
+                                                          SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Constants.JWT.GetByteMap()), SecurityAlgorithms.HmacSha256Signature)
                                                         };
 
       var token = tokenHandler.CreateToken(tokenDescriptor);
