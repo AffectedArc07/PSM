@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using PSM.Core.Core;
 using PSM.Core.Core.Auth;
@@ -57,6 +58,7 @@ namespace PSM.Core {
                 };
             });
 
+            // Add the JWT service
             builder.Services.AddScoped<IJWTRepository, JWTRepository>();
 
             // Setup logging
@@ -88,6 +90,29 @@ namespace PSM.Core {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            // This MUST go before MapControllers
+            string webapp_path = "wwwroot";
+            if(app.Environment.IsDevelopment()) {
+                webapp_path = "ClientApp/dist";
+                if(args.Contains("NO_WDS")) {
+                    app.Logger.LogInformation("Skipping WDS proxy setup");
+                } else {
+                    app.Map("/app", ctx => ctx.UseSpa(spa => {
+                        spa.Options.SourcePath = "ClientApp";
+                        spa.UseProxyToSpaDevelopmentServer("http://localhost:8400/");
+                    }));
+                    app.Logger.LogInformation("Initialised WDS proxy");
+                }
+                
+            }
+
+            app.UseFileServer(new FileServerOptions {
+                FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, webapp_path)),
+                RequestPath = "/app",
+                EnableDefaultFiles = true,
+                EnableDirectoryBrowsing = false,
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();

@@ -2,13 +2,13 @@
 
 namespace PSM.Core.Controllers {
     /// <summary>
-    /// Index controller. This will show the view for the control webapp, when its made.
+    /// Index controller. This will redirect you to the app static files dir.
     /// </summary>
     [Route("")]
     public class RootController : Controller {
         [HttpGet]
         public IActionResult Index() {
-            return NotFound("TODO"); // View(); TODO
+            return Redirect("app");
         }
     }
 }

@@ -11,6 +11,7 @@
   "profiles": {
     "PSM.Core": {
       "commandName": "Project",
+      "commandLineArgs": "NO_WDS",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
