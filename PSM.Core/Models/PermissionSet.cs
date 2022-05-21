@@ -6,7 +6,7 @@ namespace PSM.Core.Models;
 
 public class PermissionSet {
   public int                  Owner       { get; set; }
-  public List<PSMPermissions> Permissions { get; set; }
+  public List<PSMPermission> Permissions { get; set; }
 
   [NotMapped]
   public User? UserOwner { get; set; }

@@ -25,17 +25,17 @@ namespace PSM.Core.Core {
       private static byte[]? _byteMap;
     }
 
-    public static List<PSMPermissions> AllPermissions =>
+    public static List<PSMPermission> AllPermissions =>
       new() {
-              PSMPermissions.UserCreate,
-              PSMPermissions.UserDelete,
-              PSMPermissions.UserModify,
-              PSMPermissions.UserEnable
+              PSMPermission.UserCreate,
+              PSMPermission.UserDelete,
+              PSMPermission.UserModify,
+              PSMPermission.UserEnable
             };
 
   }
 
-  public enum PSMPermissions : ulong {
+  public enum PSMPermission : ulong {
     // User permissions
     UserCreate = 1,
     UserDelete = 2,

@@ -59,7 +59,7 @@ namespace PSM.Core.Core.Database {
     }
 
     public PSMResponse CreatePSMUser(User initiator, User toCreate) {
-      if(!initiator.PermissionSet.Permissions.Contains(PSMPermissions.UserCreate))
+      if(!initiator.PermissionSet.Permissions.Contains(PSMPermission.UserCreate))
         return PSMResponse.NoPermission;
       // Check that all of the created users permissions are possessed by the initiator
       if(!toCreate.PermissionSet.Permissions.All(initiator.PermissionSet.Permissions.Contains))
@@ -71,12 +71,12 @@ namespace PSM.Core.Core.Database {
       return PSMResponse.Ok;
     }
 
-    public bool CheckPermission(User user, PSMPermissions permission) {
+    public bool CheckPermission(User user, PSMPermission permission) {
       if(user.PermissionSet is not null)
         return user.PermissionSet.Permissions.Contains(permission);
       // If their permission set doesnt exist attempt to locate their set in the db, or create one if not found
       if(PermissionSets.FirstOrDefault(set => set.Owner == user.Id) is not { } userSet) {
-        userSet = new PermissionSet { Owner = user.Id, Permissions = new List<PSMPermissions>() };
+        userSet = new PermissionSet { Owner = user.Id, Permissions = new List<PSMPermission>() };
         PermissionSets.Add(userSet);
         SaveChanges();
       }
@@ -85,8 +85,8 @@ namespace PSM.Core.Core.Database {
       return CheckPermission(user, permission);
     }
 
-    public PSMResponse PermissionGrant(User initiator, User user, PSMPermissions permission) {
-      if(!CheckPermission(initiator, permission) || !CheckPermission(initiator, PSMPermissions.UserModify))
+    public PSMResponse PermissionGrant(User initiator, User user, PSMPermission permission) {
+      if(!CheckPermission(initiator, permission) || !CheckPermission(initiator, PSMPermission.UserModify))
         return PSMResponse.NoPermission;
       if(user.PermissionSet.Permissions.Contains(permission))
         return PSMResponse.NotFound;
@@ -96,8 +96,8 @@ namespace PSM.Core.Core.Database {
       return PSMResponse.Ok;
     }
 
-    public PSMResponse PermissionDeny(User initiator, User user, PSMPermissions permissions) {
-      if(!CheckPermission(initiator, permissions) || !CheckPermission(initiator, PSMPermissions.UserModify))
+    public PSMResponse PermissionDeny(User initiator, User user, PSMPermission permissions) {
+      if(!CheckPermission(initiator, permissions) || !CheckPermission(initiator, PSMPermission.UserModify))
         return PSMResponse.NoPermission;
       if(!user.PermissionSet.Permissions.Contains(permissions))
         return PSMResponse.NotFound;
