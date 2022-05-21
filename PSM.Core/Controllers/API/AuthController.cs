@@ -5,75 +5,69 @@ using PSM.Core.Models;
 using System.Net.Http.Headers;
 using System.Text;
 using PSM.Core.Core.Auth;
-using Microsoft.AspNetCore.Authorization;
+using PSM.Core.Models.Auth;
 
 namespace PSM.Core.Controllers.API {
-    [Route("api/auth")]
-    public class AuthController : Controller {
-        private readonly PSMContext dbc;
-        private readonly PasswordHasher<User> hasher;
-        private readonly IJWTRepository auth;
-        public AuthController(PSMContext _dbc, IJWTRepository _auth) {
-            dbc = _dbc;
-            hasher = new PasswordHasher<User>();
-            auth = _auth;
-        }
+  [Route("api/auth")]
+  public class AuthController : Controller {
+    private readonly PSMContext           _dbc;
+    private readonly PasswordHasher<User> _hasher;
+    private readonly IJWTRepository       _auth;
 
-        /// <summary>
-        /// Takes a username and password using basic auth, and will return a token and expiration timestamp.
-        /// </summary>
-        /// <returns>A token response or reason for token refusal</returns>
-        [HttpPost]
-        [Route("login")]
-        [ProducesResponseType(typeof(TokenResponseModel), 200)]
-        public IActionResult Login() {
-            // Make sure they set the headers
-			if(!Request.Headers.ContainsKey("Authorization")) {
-				return Unauthorized("No Authorization header! Please authenticate with basic auth, using your username and password");
-            }
-            string authheader_str = Request.Headers["Authorization"];
-            if(!authheader_str.StartsWith("Basic")) {
-                return Unauthorized("Invalid auth header! Must be basic auth!");
-            }
-
-            AuthenticationHeaderValue authheader_obj = AuthenticationHeaderValue.Parse(Request.Headers["Authorization"]);
-
-            if(authheader_obj.Parameter == null) {
-                return Unauthorized("Invalid auth header!");
-            }
-
-            // Get the info from basic auth
-            byte[] credentialBytes = Convert.FromBase64String(authheader_obj.Parameter);
-            string[] credentials = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
-            string username = credentials[0];
-            string password = credentials[1];
-
-            if(username == null || username.Length == 0 || password == null || password.Length == 0) {
-                return Unauthorized("Username or password not supplied!");
-            }
-
-            // Now see if a user exists
-            if(!dbc.Users.Where(x => x.Username.Equals(username)).Any()) {
-                return Unauthorized(string.Format("User {0} not found. Please make sure you used the correct case.", username));
-            }
-
-            // We passed above check, so the user exists
-            User target_user = dbc.Users.Where(x => x.Username.Equals(username)).First();
-
-            // Make sure theyre actually enabled
-            if(!target_user.Enabled) {
-                return Unauthorized(string.Format("User {0} is not enabled.", username));
-            }
-
-            // Now verify the password
-            PasswordVerificationResult hashres = hasher.VerifyHashedPassword(target_user, target_user.PasswordHash, password);
-            if(hashres == PasswordVerificationResult.Failed) {
-                return Unauthorized(string.Format("Invalid password for user {0}!", username));
-            }
-
-            // Now generate a JWT
-            TokenResponseModel trm = auth.Authenticate(target_user);
-            return Ok(trm);
-        }
+    public AuthController(PSMContext dbc, IJWTRepository auth) {
+      _dbc    = dbc;
+      _hasher = new PasswordHasher<User>();
+      _auth   = auth;
     }
+
+    /// <summary>
+    /// Takes a username and password using basic auth, and will return a token and expiration timestamp.
+    /// </summary>
+    /// <returns>A token response or reason for token refusal</returns>
+    [HttpPost]
+    [Route("login")]
+    [ProducesResponseType(typeof(ClientTokenModel), 200)]
+    public IActionResult Login() {
+      // Make sure they set the headers
+      if(!Request.Headers.ContainsKey("Authorization"))
+        return Unauthorized("No Authorization header! Please authenticate with basic auth, using your username and password");
+
+      string authStr = Request.Headers["Authorization"];
+      if(!authStr.StartsWith("Basic"))
+        return Unauthorized("Invalid auth header! Must be basic auth!");
+
+      var authHeader = AuthenticationHeaderValue.Parse(authStr);
+      if(authHeader.Parameter == null)
+        return Unauthorized("Invalid auth header!");
+
+      // Get the info from basic auth
+      var credentialBytes = Convert.FromBase64String(authHeader.Parameter);
+      var credentials     = Encoding.UTF8.GetString(credentialBytes).Split(new[] { ':' }, 2);
+      var username        = credentials[0];
+      var password        = credentials[1];
+
+      if(string.IsNullOrEmpty(username) || username.Length == 0 || string.IsNullOrEmpty(password) || password.Length == 0)
+        return BadRequest("Username or password not supplied!");
+
+      // Now see if a user exists
+      if(!_dbc.Users.Any(x => x.Username.Equals(username)))
+        return BadRequest($"User {username} not found. Please make sure you used the correct case.");
+
+      // We passed above check, so the user exists
+      var targetUser = _dbc.Users.First(x => x.Username.Equals(username));
+
+      // Make sure they're actually enabled
+      if(!targetUser.Enabled)
+        return Unauthorized($"User {username} is not enabled.");
+
+      // Now verify the password
+      var hash = _hasher.VerifyHashedPassword(targetUser, targetUser.PasswordHash, password);
+      if(hash == PasswordVerificationResult.Failed)
+        return Unauthorized($"Invalid password for user {username}!");
+
+      // Now generate a JWT
+      var trm = _auth.Authenticate(targetUser);
+      return Ok(trm);
+    }
+  }
 }
