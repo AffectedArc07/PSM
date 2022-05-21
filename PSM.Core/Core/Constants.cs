@@ -42,4 +42,8 @@ namespace PSM.Core.Core {
     UserModify = 3,
     UserEnable = 4
   }
+
+  public enum PSMResponse {
+    Ok, NotFound, NoPermission 
+  }
 }

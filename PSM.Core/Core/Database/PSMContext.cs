@@ -9,6 +9,7 @@ namespace PSM.Core.Core.Database {
     public PSMContext(DbContextOptions<PSMContext> options) : base(options) { }
     public DbSet<User>          Users          { get; set; } = null!;
     public DbSet<PermissionSet> PermissionSets { get; set; } = null!;
+    public User                 SystemUser;
 
     /// <summary>
     /// Adds the default system user and an admin user
@@ -37,6 +38,8 @@ namespace PSM.Core.Core.Database {
         return false;
       }
 
+      SystemUser = systemUser;
+
       if(Users.FirstOrDefault(user => user.Username.Equals(Constants.System.SystemAdminUsername, StringComparison.Ordinal)) is not { } adminUser) {
         adminUser = new User {
                                Enabled   = true,
@@ -45,8 +48,7 @@ namespace PSM.Core.Core.Database {
                              };
         adminUser.PasswordHash  = new PasswordHasher<User>().HashPassword(adminUser, Constants.System.SystemAdminPassword);
         adminUser.PermissionSet = new PermissionSet { Owner = adminUser.Id, Permissions = Constants.AllPermissions };
-        Users.Add(adminUser);
-        adminUser.PermissionSet.MapOwner(this);
+        CreatePSMUser(systemUser, adminUser);
         logger.LogInformation("Created default admin user");
         seedingOccured = true;
         SaveChanges();
@@ -54,6 +56,55 @@ namespace PSM.Core.Core.Database {
 
       SaveChanges();
       return seedingOccured;
+    }
+
+    public PSMResponse CreatePSMUser(User initiator, User toCreate) {
+      if(!initiator.PermissionSet.Permissions.Contains(PSMPermissions.UserCreate))
+        return PSMResponse.NoPermission;
+      // Check that all of the created users permissions are possessed by the initiator
+      if(!toCreate.PermissionSet.Permissions.All(initiator.PermissionSet.Permissions.Contains))
+        return PSMResponse.NoPermission;
+      Users.Add(toCreate);
+      toCreate.PermissionSet.MapOwner(this);
+      PermissionSets.Add(toCreate.PermissionSet);
+      SaveChanges();
+      return PSMResponse.Ok;
+    }
+
+    public bool CheckPermission(User user, PSMPermissions permission) {
+      if(user.PermissionSet is not null)
+        return user.PermissionSet.Permissions.Contains(permission);
+      // If their permission set doesnt exist attempt to locate their set in the db, or create one if not found
+      if(PermissionSets.FirstOrDefault(set => set.Owner == user.Id) is not { } userSet) {
+        userSet = new PermissionSet { Owner = user.Id, Permissions = new List<PSMPermissions>() };
+        PermissionSets.Add(userSet);
+        SaveChanges();
+      }
+
+      userSet.MapOwner(this);
+      return CheckPermission(user, permission);
+    }
+
+    public PSMResponse PermissionGrant(User initiator, User user, PSMPermissions permission) {
+      if(!CheckPermission(initiator, permission) || !CheckPermission(initiator, PSMPermissions.UserModify))
+        return PSMResponse.NoPermission;
+      if(user.PermissionSet.Permissions.Contains(permission))
+        return PSMResponse.NotFound;
+
+      user.PermissionSet.Permissions.Add(permission);
+      SaveChanges();
+      return PSMResponse.Ok;
+    }
+
+    public PSMResponse PermissionDeny(User initiator, User user, PSMPermissions permissions) {
+      if(!CheckPermission(initiator, permissions) || !CheckPermission(initiator, PSMPermissions.UserModify))
+        return PSMResponse.NoPermission;
+      if(!user.PermissionSet.Permissions.Contains(permissions))
+        return PSMResponse.NotFound;
+
+      user.PermissionSet.Permissions.Remove(permissions);
+      SaveChanges();
+      return PSMResponse.Ok;
     }
   }
 }
