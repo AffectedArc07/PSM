@@ -11,32 +11,32 @@ namespace PSM.Core {
     public static class Program {
         public static void Main(string[] args) {
             // Logger outside of the host builder that we can use here
-            ILogger startup_logger = LoggerFactory.Create(configure => {
-                configure.AddSimpleConsole(options => {
-                    options.IncludeScopes = true;
-                    options.TimestampFormat = "[yyyy-MM-dd hh:mm:ss] ";
-                });
-            }).CreateLogger("startup");
+            var startup_logger = LoggerFactory.Create(configure => {
+                                                          configure.AddSimpleConsole(options => {
+                                                                                         options.IncludeScopes = true;
+                                                                                         options.TimestampFormat = "[yyyy-MM-dd hh:mm:ss] ";
+                                                                                     });
+                                                      }).CreateLogger("startup");
 
-            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(args);
             // Config right off the bat
             builder.Configuration.AddTomlFile("appsettings.toml");
 
-            string connstr = builder.Configuration.GetSection("Database").GetValue<string>("Connstring");
+            var connstr = builder.Configuration.GetSection("Database").GetValue<string>("Connstring");
 
             startup_logger.LogInformation("Attempting to connect to database...");
 
             // Try establish a DBCon ASAP
             builder.Services.AddDbContext<PSMContext>(options => {
-                try {
-                    options.UseMySql(connstr, ServerVersion.AutoDetect(connstr));
-                    startup_logger.LogInformation("Database connection successful");
-                } catch (MySqlConnector.MySqlException ex) {
-                    startup_logger.LogCritical(string.Format("Failed to connect to the MySQL/MariaDB Server: {0}", ex.ToString()));
-                    startup_logger.LogCritical("This is a fatal error. PSM will now close");
-                    Environment.Exit(1);
-                }
-            });
+                                                          try {
+                                                              options.UseMySql(connstr, ServerVersion.AutoDetect(connstr));
+                                                              startup_logger.LogInformation("Database connection successful");
+                                                          } catch(MySqlConnector.MySqlException ex) {
+                                                              startup_logger.LogCritical("Failed to connect to the MySQL/MariaDB Server: {Exception}", ex.ToString());
+                                                              startup_logger.LogCritical("This is a fatal error. PSM will now close");
+                                                              Environment.Exit(1);
+                                                          }
+                                                      });
 
             // Add services
             builder.Services.AddControllers();
@@ -54,7 +54,7 @@ namespace PSM.Core {
                     ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Constants.GetJWTBytes())
+                    IssuerSigningKey = new SymmetricSecurityKey(Constants.JWT.GetByteMap())
                 };
             });
 
@@ -70,18 +70,18 @@ namespace PSM.Core {
             // Suppress EF logs
             builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
 
-            WebApplication app = builder.Build();
+            var app = builder.Build();
 
-            using (IServiceScope scope = app.Services.CreateScope()) {
-                PSMContext dbcon = scope.ServiceProvider.GetRequiredService<PSMContext>();
+            using (var scope = app.Services.CreateScope()) {
+                var dbcon = scope.ServiceProvider.GetRequiredService<PSMContext>();
                 app.Logger.LogInformation("Migrating database.....");
                 dbcon.Database.Migrate();
                 app.Logger.LogInformation("Database schema migrated. Seeding default users...");
-                bool users_seeded = dbcon.SeedPSMUsers(app.Logger);
+                var users_seeded = dbcon.SeedPSMUsers(app.Logger);
                 if(users_seeded) {
-                    app.Logger.LogInformation("Users seeded successfully.");
+                    app.Logger.LogInformation("Users seeded successfully");
                 } else {
-                    app.Logger.LogInformation("No user seeding required.");
+                    app.Logger.LogInformation("No user seeding required");
                 }
             }
 
@@ -92,7 +92,7 @@ namespace PSM.Core {
             }
 
             // This MUST go before MapControllers
-            string webapp_path = "wwwroot";
+            var webapp_path = "wwwroot";
             if(app.Environment.IsDevelopment()) {
                 webapp_path = "ClientApp/dist";
                 if(args.Contains("NO_WDS")) {
