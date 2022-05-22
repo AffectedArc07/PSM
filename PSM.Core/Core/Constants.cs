@@ -7,6 +7,11 @@ namespace PSM.Core.Core {
       public const string SystemUsername      = "SYSTEM";
       public const string SystemAdminUsername = "ADMIN";
       public const string SystemAdminPassword = "ChangeMeYouMuppet";
+
+      public const int UsernameMinimumLength = 8;
+      public const int UsernameMaximumLength = 64;
+      public const int PasswordMinimumLength = 8;
+      public const int PasswordMaximumLength = 64;
     }
 
     public static class ExitCodes {
