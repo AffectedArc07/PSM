@@ -8,7 +8,7 @@ using PSM.Core.Models.Database;
 
 namespace PSM.Core.Core.Auth {
   public interface IJWTRepository {
-    ClientTokenModel Authenticate(User           user);
+    ClientTokenModel Authenticate(User           user, HttpContext context);
     User?            UserFromContext(HttpContext context);
   }
 
@@ -19,7 +19,7 @@ namespace PSM.Core.Core.Auth {
       _dbc = dbc;
     }
 
-    public ClientTokenModel Authenticate(User user) {
+    public ClientTokenModel Authenticate(User user, HttpContext context) {
       var tokenHandler   = new JwtSecurityTokenHandler();
       var expirationTime = DateTime.UtcNow.AddMinutes(15); // 15 minute lifetime
       var tokenDescriptor = new SecurityTokenDescriptor {
@@ -30,8 +30,23 @@ namespace PSM.Core.Core.Auth {
                                                           SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Constants.JWT.GetByteMap()), SecurityAlgorithms.HmacSha256Signature)
                                                         };
 
-      var token = tokenHandler.CreateToken(tokenDescriptor);
-      return new ClientTokenModel { Token = tokenHandler.WriteToken(token), ExpiresAt = expirationTime };
+      var token = tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
+      if(_dbc.UserTokens.FirstOrDefault(tok => tok.Id == user.Id) is { } userToken) {
+        userToken.ExpiresAt         = expirationTime;
+        userToken.OriginatorAddress = context.Connection.RemoteIpAddress.ToString();
+        userToken.TokenValue        = token;
+      } else {
+        _dbc.UserTokens.Add(new UserToken {
+                                            Id                = user.Id,
+                                            ExpiresAt         = expirationTime,
+                                            OriginatorAddress = context.Connection.RemoteIpAddress.ToString(),
+                                            TokenValue        = token
+                                          });
+      }
+
+      _dbc.SaveChanges();
+
+      return new ClientTokenModel { Token = token, ExpiresAt = expirationTime };
     }
 
     public User? UserFromContext(HttpContext context) {

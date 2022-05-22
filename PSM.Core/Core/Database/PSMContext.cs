@@ -10,6 +10,7 @@ namespace PSM.Core.Core.Database {
     public PSMContext(DbContextOptions<PSMContext> options) : base(options) { }
     public DbSet<User>          Users          { get; set; }
     public DbSet<PermissionSet> PermissionSets { get; set; }
+    public DbSet<UserToken>    UserTokens     { get; set; }
     public User                 SystemUser;
 
     /// <summary>

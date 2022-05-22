@@ -46,6 +46,31 @@ namespace PSM.Core.Migrations
                     b.ToTable("users");
                 });
 
+            modelBuilder.Entity("PSM.Core.Models.Database.UserToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("OriginatorAddress")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("OriginatorRoaming")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("TokenValue")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("user_tokens");
+                });
+
             modelBuilder.Entity("PSM.Core.Models.PermissionSet", b =>
                 {
                     b.Property<int>("Id")
