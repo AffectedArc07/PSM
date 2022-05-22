@@ -4,6 +4,7 @@ using PSM.Core.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using PSM.Core.Models.Auth;
+using PSM.Core.Models.Database;
 
 namespace PSM.Core.Core.Auth {
   public interface IJWTRepository {

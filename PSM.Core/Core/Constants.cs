@@ -8,7 +8,7 @@ namespace PSM.Core.Core {
       public const string SystemAdminUsername = "ADMIN";
       public const string SystemAdminPassword = "ChangeMeYouMuppet";
     }
-    
+
     public static class ExitCodes {
       public const int SystemUserEnabled = 125;
     }
@@ -25,15 +25,12 @@ namespace PSM.Core.Core {
       private static byte[]? _byteMap;
     }
 
-    public static List<PSMPermission> AllPermissions =>
-      new() {
-              PSMPermission.UserCreate,
-              PSMPermission.UserDelete,
-              PSMPermission.UserModify,
-              PSMPermission.UserEnable
-            };
+    public static string AllPermissions => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
 
+    public static string              ConvertToPermissionString(this IEnumerable<PSMPermission> permList)   => permList.Aggregate("", (current, psmPermission) => $"{current};{(ulong)psmPermission}").Trim(';');
+    public static List<PSMPermission> ConvertToPermissionList(this   string                     permString) => permString.Split(";").Select(Enum.Parse<PSMPermission>).ToList();
   }
+
 
   public enum PSMPermission : ulong {
     // User permissions
@@ -44,6 +41,6 @@ namespace PSM.Core.Core {
   }
 
   public enum PSMResponse {
-    Ok, NotFound, NoPermission 
+    Ok, NotFound, NoPermission
   }
 }

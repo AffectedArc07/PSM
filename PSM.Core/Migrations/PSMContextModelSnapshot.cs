@@ -19,7 +19,7 @@ namespace PSM.Core.Migrations
                 .HasAnnotation("ProductVersion", "6.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("PSM.Core.Models.User", b =>
+            modelBuilder.Entity("PSM.Core.Models.Database.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,12 +43,27 @@ namespace PSM.Core.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Users");
+                    b.ToTable("users");
                 });
 
-            modelBuilder.Entity("PSM.Core.Models.User", b =>
+            modelBuilder.Entity("PSM.Core.Models.PermissionSet", b =>
                 {
-                    b.HasOne("PSM.Core.Models.User", "CreatedBy")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("PermissionString")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("permission_sets");
+                });
+
+            modelBuilder.Entity("PSM.Core.Models.Database.User", b =>
+                {
+                    b.HasOne("PSM.Core.Models.Database.User", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById");
 
