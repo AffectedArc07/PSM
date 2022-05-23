@@ -72,7 +72,7 @@ namespace PSM.Core.Controllers.API {
 
     [Route("debug_verify")]
     public IActionResult DebugVerify() {
-      return UserToken.AttemptValidateToken(HttpContext, _auth, _dbc) ? Ok() : Unauthorized();
+      return _auth.UserFromContext(HttpContext) is { } ? Ok() : Unauthorized();
     }
   }
 }
