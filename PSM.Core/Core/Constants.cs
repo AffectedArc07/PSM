@@ -2,6 +2,11 @@
 
 namespace PSM.Core.Core {
   public static class Constants {
+    public static class Config {
+      //todo: make this not a fucking static class in the constants folder
+      public static bool ReverseProxyEnabled = true;
+    }
+
     public static class System {
       public const string DefaultInstanceDir  = "C:/PSM/instances/";
       public const string SystemUsername      = "SYSTEM";
@@ -30,10 +35,22 @@ namespace PSM.Core.Core {
       private static byte[]? _byteMap;
     }
 
-    public static string AllPermissions => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
+    public static string  AllPermissions => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
+    public static ILogger AppLog         { get; set; } = null!;
 
     public static string              ConvertToPermissionString(this IEnumerable<PSMPermission> permList)   => permList.Aggregate("", (current, psmPermission) => $"{current};{(ulong)psmPermission}").Trim(';');
     public static List<PSMPermission> ConvertToPermissionList(this   string                     permString) => permString.Split(";").Select(Enum.Parse<PSMPermission>).ToList();
+
+    public static string GetRemoteFromContext(HttpContext context) {
+      if(!Config.ReverseProxyEnabled)
+        return context.Connection.RemoteIpAddress.ToString();
+
+      var forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString().Trim();
+      var comma        = forwardedFor.IndexOf(',');
+      if(comma == -1)
+        return forwardedFor;
+      return forwardedFor[..comma];
+    }
   }
 
 
