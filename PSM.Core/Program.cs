@@ -71,6 +71,7 @@ namespace PSM.Core {
             builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
 
             var app = builder.Build();
+            Constants.AppLog = app.Logger;
 
             using (var scope = app.Services.CreateScope()) {
                 var dbcon = scope.ServiceProvider.GetRequiredService<PSMContext>();
