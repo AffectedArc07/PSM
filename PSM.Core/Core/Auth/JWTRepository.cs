@@ -59,7 +59,7 @@ namespace PSM.Core.Core.Auth {
       if(auth[0] != ' ') {
         var lastP    = auth.IndexOf(')');
         var idString = auth[1..lastP];
-        auth = auth[lastP..];
+        auth = auth[(lastP + 1)..].Trim();
         if(!int.TryParse(idString, out var id))
           return null;
         if(_dbc.UserTokens.FirstOrDefault(dbToken => dbToken.Id == id) is not { } userToken)
