@@ -46,7 +46,7 @@ namespace PSM.Core.Core.Auth {
 
       _dbc.SaveChanges();
 
-      return new ClientTokenModel { Token = token, ExpiresAt = expirationTime };
+      return new ClientTokenModel { Token = token, ExpiresAt = expirationTime, userId = user.Id};
     }
 
     public User? UserFromContext(HttpContext context) {

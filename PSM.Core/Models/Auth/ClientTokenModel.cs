@@ -15,6 +15,11 @@ public class ClientTokenModel : ModelBase {
   [JsonRequired]
   public DateTimeOffset? ExpiresAt { get; set; }
 
+  /// <summary>
+  /// The user ID of this token
+  /// </summary>
+  public int userId { get; set; }
+
   protected override bool ValidateModel() {
     if(ExpiresAt!.Value.CompareTo(DateTimeOffset.UtcNow) <= 0)
       return false;
