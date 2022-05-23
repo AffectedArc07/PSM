@@ -47,9 +47,11 @@ namespace PSM.Core.Core {
 
       var forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString().Trim();
       var comma        = forwardedFor.IndexOf(',');
-      if(comma == -1)
-        return forwardedFor;
-      return forwardedFor[..comma];
+      if(comma != -1)
+        forwardedFor = forwardedFor[..comma];
+      if(string.IsNullOrWhiteSpace(forwardedFor))
+        return context.Connection.RemoteIpAddress.ToString();
+      return forwardedFor;
     }
   }
 
