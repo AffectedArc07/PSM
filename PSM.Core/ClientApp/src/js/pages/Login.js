@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { LoginOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Form, Input, message, Row, Space, Spin, Typography } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Space } from 'antd';
 import { API } from '../core/api_manager';
-const { Text } = Typography;
 
 export const Login = () => {
   const [locked, setLocked] = useState(false);
