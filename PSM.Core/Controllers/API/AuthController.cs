@@ -69,5 +69,10 @@ namespace PSM.Core.Controllers.API {
       var trm = _auth.Authenticate(targetUser, HttpContext);
       return Ok(trm);
     }
+
+    [Route("debug_verify")]
+    public IActionResult DebugVerify() {
+      return UserToken.AttemptValidateToken(HttpContext, _auth, _dbc) ? Ok() : Unauthorized();
+    }
   }
 }
