@@ -50,13 +50,36 @@ namespace PSM.Core.Core.Auth {
     }
 
     public User? UserFromContext(HttpContext context) {
-      if(context.User.Identity is not ClaimsIdentity identity)
+      var auth = context.Request.Headers.Authorization.ToString();
+      if(!auth.StartsWith("Bearer"))
         return null;
-      if(!int.TryParse(identity.FindFirst("id").Value, out var userid))
-        return null;
-      if(_dbc.Users.FirstOrDefault(x => x.Id == userid) is not { } user)
-        return null;
-      // By only returning enabled users, we can handle disabling users while tokens are still alive
+      auth = auth[6..];
+
+      User? user;
+      if(auth[0] != ' ') {
+        var lastP    = auth.IndexOf(')');
+        var idString = auth[1..lastP];
+        auth = auth[lastP..];
+        if(!int.TryParse(idString, out var id))
+          return null;
+        if(_dbc.UserTokens.FirstOrDefault(dbToken => dbToken.Id == id) is not { } userToken)
+          return null;
+        if(!userToken.OriginatorRoaming && userToken.OriginatorAddress != Constants.GetRemoteFromContext(context))
+          return null;
+        if(userToken.TokenValue != auth)
+          return null;
+        user = _dbc.Users.First(dbUser => dbUser.Id == id);
+      } else {
+        var originator = Constants.GetRemoteFromContext(context);
+        if(_dbc.UserTokens.FirstOrDefault(dbToken => dbToken.OriginatorAddress == originator) is not { } userToken)
+          return null;
+        if(userToken.OriginatorRoaming)
+          return null;
+        if(userToken.TokenValue != auth)
+          return null;
+        user = _dbc.Users.First(dbUser => dbUser.Id == userToken.Id);
+      }
+
       return user.Enabled ? user : null;
     }
   }
