@@ -1,6 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using PSM.Core.Core.Database;
-using PSM.Core.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using PSM.Core.Models.Auth;
@@ -55,7 +54,7 @@ namespace PSM.Core.Core.Auth {
         return null;
       auth = auth[6..];
 
-      User? user;
+      User? user; 
       if(auth[0] != ' ') {
         var lastP    = auth.IndexOf(')');
         var idString = auth[1..lastP];

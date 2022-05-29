@@ -38,8 +38,8 @@ namespace PSM.Core.Core {
     public static string  AllPermissions => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
     public static ILogger AppLog         { get; set; } = null!;
 
-    public static string              ConvertToPermissionString(this IEnumerable<PSMPermission> permList)   => permList.Aggregate("", (current, psmPermission) => $"{current};{(ulong)psmPermission}").Trim(';');
-    public static List<PSMPermission> ConvertToPermissionList(this   string                     permString) => permString.Split(";").Select(Enum.Parse<PSMPermission>).ToList();
+    public static string              ConvertToPermissionString(this IEnumerable<PSMPermission> permList)   => permList.Distinct().Aggregate("", (current, psmPermission) => $"{current};{(ulong)psmPermission}").Trim(';');
+    public static List<PSMPermission> ConvertToPermissionList(this   string                     permString) => permString.Split(";").Select(Enum.Parse<PSMPermission>).Distinct().ToList();
 
     public static string GetRemoteFromContext(HttpContext context) {
       if(!Config.ReverseProxyEnabled)
