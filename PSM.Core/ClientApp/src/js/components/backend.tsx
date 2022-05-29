@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 
 export default class Backend {
   private constructor(name: string) {
@@ -20,7 +20,8 @@ export default class Backend {
     this.backendState[valueName] = value;
     const listeners: React.Component[] = this.backendListeners[valueName];
     if (listeners === undefined) return;
-    listeners.forEach((listener) => listener.forceUpdate());
+    console.log(listeners);
+    listeners.forEach((listener) => { if (listener) { listener.forceUpdate() } });
   }
 
   private pushListener(valueName: string, listener: React.Component) {
