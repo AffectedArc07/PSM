@@ -1,19 +1,18 @@
 import React, {useState} from 'react';
 import {Login} from './pages/Login';
 import {API} from './core/api_manager';
-import Backend from "./components/backend";
-import { Main } from './pages/Main';
+import {Main} from './pages/Main';
 
 export const App = () => {
-  const [, setForceRefresh] = useState(0);
-  API.setReloadState(setForceRefresh);
+  const [sfState, setForceRefresh] = useState(0);
+  API.setReloadState(() => setForceRefresh(sfState + 1));
 
   if (!API.valid_token()) {
     return (
-      <Login />
+      <Login/>
     );
   }
 
-  return <Main />;
+  return <Main/>;
 
 };
