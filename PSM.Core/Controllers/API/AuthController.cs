@@ -24,8 +24,7 @@ namespace PSM.Core.Controllers.API {
     /// Takes a username and password using basic auth, and will return a token and expiration timestamp.
     /// </summary>
     /// <returns>A token response or reason for token refusal</returns>
-    [HttpPost]
-    [Route("login")]
+    [HttpPost("login")]
     [ProducesResponseType(typeof(ClientTokenModel), 200)]
     public IActionResult Login() {
       // Make sure they set the headers
@@ -70,7 +69,7 @@ namespace PSM.Core.Controllers.API {
       return Ok(trm);
     }
 
-    [Route("debug_verify")]
+    [HttpGet("debug_verify")]
     public IActionResult DebugVerify() {
       return _auth.UserFromContext(HttpContext) is { } ? Ok() : Unauthorized();
     }
