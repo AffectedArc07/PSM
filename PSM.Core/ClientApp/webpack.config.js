@@ -54,6 +54,7 @@ module.exports = smp.wrap({
     ]
   },
 
-  mode: 'production',
+  mode: 'development', // todo: dont forget to change this back to 'production',
+  devtool: 'source-map' // todo: dont forget to remove this line entirely
 })
 ;
