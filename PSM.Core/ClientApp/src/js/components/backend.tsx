@@ -20,7 +20,6 @@ export default class Backend {
     this.backendState[valueName] = value;
     const listeners: React.Component[] = this.backendListeners[valueName];
     if (listeners === undefined) return;
-    console.log(listeners);
     listeners.forEach((listener) => { if (listener) { listener.forceUpdate() } });
   }
 
