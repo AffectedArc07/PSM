@@ -1,12 +1,20 @@
-import axios from 'axios';
+import axios, {AxiosInstance} from 'axios';
 import {notification} from 'antd';
 
+export type LoginForm = {
+  username: string
+  password: string
+}
+
 class ApiManager {
+  bearer: string
+  bearerId: number
+  bearerExp: number
+  axs: AxiosInstance
+  reloadState: () => void
+
   constructor() {
     console.log("[API-M] Starting API manager");
-    this.bearer = null;
-    this.bearerId = null;
-    this.bearerExp = null;
     // We handle our own errors here
     this.axs = axios.create({
       validateStatus: function () {
@@ -31,11 +39,11 @@ class ApiManager {
     return true;
   }
 
-  async attempt_login(form) {
+  async attempt_login(form: LoginForm) {
     let response = await this.axs.post("/api/auth/login", {}, {
       auth: {
-        username: form["username"],
-        password: form["password"],
+        username: form.username,
+        password: form.password,
       },
     });
 
@@ -56,14 +64,15 @@ class ApiManager {
     this.axs.defaults.headers.common = {
       Authorization: `Bearer${this.bearerId !== 0 ? `(${this.bearerId})` : ``} ${this.bearer}`
     }
-    this.reloadState(1);
+    this.reloadState();
+    return true;
   }
 
-  setReloadState(s) {
+  setReloadState(s: () => void) {
     this.reloadState = s;
   }
 
-  sleep(ms) {
+  sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
