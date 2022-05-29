@@ -1,0 +1,33 @@
+﻿* {
+  margin: 0;
+  padding: 0;
+}
+
+#navbar {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+}
+
+#navbar li {
+  color: blueviolet;
+  float: left;
+  text-decoration: none;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 200%;
+  font-weight: bold;
+  padding: 4px 10px;
+  border: 2px solid black;
+}
+
+#navbar #selected {
+  color: darkcyan;
+}
+
+#navbar #notSelected:hover {
+  color: lightblue;
+  background-color: #666;
+}
