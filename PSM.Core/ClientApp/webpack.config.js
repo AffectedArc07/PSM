@@ -36,8 +36,8 @@ module.exports = smp.wrap({
         loader: 'babel-loader',
         options: {
           presets: ['@babel/preset-react'],
-        },
-      },
+        }
+      }
     }, {
       test: /\.tsx?$/,
       use: 'ts-loader',
@@ -45,7 +45,7 @@ module.exports = smp.wrap({
     }, {
       test: /\.css$/,
       use: ['style-loader', 'css-loader'],
-    }],
+    }]
   },
 
   mode: 'production',
