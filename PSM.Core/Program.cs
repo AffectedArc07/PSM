@@ -10,6 +10,7 @@ using Tomlyn.Extensions.Configuration;
 namespace PSM.Core {
     public static class Program {
         public static void Main(string[] args) {
+            Console.WriteLine("Starting PSM.");
             // Logger outside of the host builder that we can use here
             var startup_logger = LoggerFactory.Create(configure => {
                                                           configure.AddSimpleConsole(options => {
