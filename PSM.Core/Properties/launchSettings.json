@@ -9,6 +9,17 @@
     }
   },
   "profiles": {
+    "PSM.Core (No Proxy)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "commandLineArgs": "NO_WDS",
+      "applicationUrl": "http://localhost:5063",
+      "dotnetRunMessages": true
+    },
     "PSM.Core": {
       "commandName": "Project",
       "launchBrowser": true,
@@ -16,6 +27,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
+      "commandLineArgs": "NO_WDS",
       "applicationUrl": "http://localhost:5063",
       "dotnetRunMessages": true
     },
