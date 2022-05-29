@@ -12,7 +12,7 @@ module.exports = smp.wrap({
   },
 
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.css'],
   },
 
   plugins: [
@@ -44,9 +44,16 @@ module.exports = smp.wrap({
       exclude: /node_modules/,
     }, {
       test: /\.css$/,
-      use: ['style-loader', 'css-loader'],
-    }]
+      use: [{
+        loader: 'style-loader',
+        options: {
+          injectType: "styleTag"
+        }
+      }, "css-loader"]
+    }
+    ]
   },
 
   mode: 'production',
-});
+})
+;
