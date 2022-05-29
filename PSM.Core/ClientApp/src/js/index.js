@@ -7,7 +7,6 @@ import NavigationBar from "./components/navigation_bar";
 const root = createRoot(document.getElementById('root'));
 root.render(
   <>
-    <NavigationBar/>
     <App/>
   </>
 );

@@ -5,6 +5,3 @@ AllowedHosts = "*"
 Default = "Information"
 [Logging.LogLevel.Microsoft]
 AspNetCore = "Warning"
-
-[Database]
-Connstring = "User=root;Password=testing;Port=3306;Database=psm_db"
