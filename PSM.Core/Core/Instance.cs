@@ -1,30 +1,30 @@
-﻿namespace PSM.Core.Core {
-    /// <summary>
-    /// Class that holds an instance
-    /// </summary>
-    public class Instance {
-        // INSTANCE "META" VARS //
+﻿namespace PSM.Core.Core;
 
-        /// <summary>
-        /// Internal instance ID
-        /// </summary>
-        public int id { get; }
+/// <summary>
+/// Class that holds an instance
+/// </summary>
+public class Instance {
+  // INSTANCE "META" VARS //
 
-        /// <summary>
-        /// Name of the instance
-        /// </summary>
-        public string name { get; }
+  /// <summary>
+  /// Internal instance ID
+  /// </summary>
+  public int id { get; set; }
 
-        /// <summary>
-        /// Path of the instance on disk
-        /// </summary>
-        public string instance_path { get; }
+  /// <summary>
+  /// Name of the instance
+  /// </summary>
+  public string name { get; set; } = null!;
 
-        /// <summary>
-        /// Is this instance active
-        /// </summary>
-        public bool is_active { get; }
+  /// <summary>
+  /// Path of the instance on disk
+  /// </summary>
+  public string instance_path { get; set; } = null!;
 
-        // INSTANCE MANAGERS //
-    }
+  /// <summary>
+  /// Is this instance active
+  /// </summary>
+  public bool is_active { get; set; }
+
+  // INSTANCE MANAGERS //
 }
