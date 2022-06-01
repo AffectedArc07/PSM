@@ -6,7 +6,7 @@ export type LoginForm = {
   password: string
 }
 
-class ApiManager {
+export class ApiManager {
   bearer: string
   bearerId: number
   bearerExp: number
