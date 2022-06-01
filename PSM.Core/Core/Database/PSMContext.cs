@@ -1,17 +1,29 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using PSM.Core.Models;
 using PSM.Core.Models.Database;
 
 namespace PSM.Core.Core.Database {
   [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
   public class PSMContext : DbContext {
     public PSMContext(DbContextOptions<PSMContext> options) : base(options) { }
-    public DbSet<User>          Users          { get; set; }
-    public DbSet<PermissionSet> PermissionSets { get; set; }
-    public DbSet<UserToken>    UserTokens     { get; set; }
-    public User                 SystemUser;
+    public        DbSet<User>          Users          { get; set; } = null!;
+    public        DbSet<PermissionSet> PermissionSets { get; set; } = null!;
+    public        DbSet<UserToken>     UserTokens     { get; set; } = null!;
+
+    public User SystemUser = null!, AdminUser = null!;
+
+    public void MapAllUsers() {
+      foreach(var user in Users.ToList())
+        user.PermissionSet = PermissionSets.Find(user.Id) ??
+                             PermissionSets.Add(new PermissionSet { Id = user.Id, PermissionString = "", UserOwner = user }).Entity;
+      if(SystemUser.PermissionSet.PermissionString != Constants.AdminPermissionString)
+        SystemUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
+      if(AdminUser.PermissionSet.PermissionString != Constants.AdminPermissionString)
+        AdminUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
+      if(SystemUser.Enabled) SystemUser.Enabled = false;
+      SaveChanges();
+    }
 
     /// <summary>
     /// Adds the default system user and an admin user
@@ -20,44 +32,36 @@ namespace PSM.Core.Core.Database {
       var seedingOccured = false;
       // Check for the system user and generate if not found
       if(Users.FirstOrDefault(user => user.Username.Equals(Constants.System.SystemUsername)) is not { } systemUser) {
+        // ReSharper disable once UseObjectOrCollectionInitializer
         systemUser = new User {
                                 Enabled      = false,
                                 Username     = Constants.System.SystemUsername,
-                                PasswordHash = "_" // Impossible to get via hashes
+                                PasswordHash = "_", // Impossible to get via hashes
                               };
-        systemUser.PermissionSet = new PermissionSet { Id = systemUser.Id, PermissionString = Constants.AllPermissions };
+        systemUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
         Users.Add(systemUser);
-        PermissionSets.Add(systemUser.PermissionSet);
-        systemUser.PermissionSet.MapOwner(this);
         logger.LogInformation("Created system user");
         seedingOccured = true;
         SaveChanges();
       }
 
-      if(systemUser.Enabled) {
-        // This should never be enabled
-        logger.LogCritical("System User is enabled");
-        Environment.Exit(Constants.ExitCodes.SystemUserEnabled);
-        return false;
-      }
-
-      SystemUser = systemUser;
-
-      if(Users.FirstOrDefault(user => user.Username.Equals(Constants.System.SystemAdminUsername)) is null) {
-        var adminUser = new User {
-                                   Enabled   = true,
-                                   Username  = Constants.System.SystemAdminUsername,
-                                   CreatedBy = systemUser
-                                 };
-        adminUser.PasswordHash  = new PasswordHasher<User>().HashPassword(adminUser, Constants.System.SystemAdminPassword);
-        adminUser.PermissionSet = new PermissionSet { Id = adminUser.Id, PermissionString = Constants.AllPermissions };
+      if(Users.FirstOrDefault(user => user.Username.Equals(Constants.System.SystemAdminUsername)) is not { } adminUser) {
+        adminUser = new User {
+                               Enabled   = true,
+                               Username  = Constants.System.SystemAdminUsername,
+                               CreatedBy = systemUser,
+                             };
+        adminUser.PasswordHash                   = new PasswordHasher<User>().HashPassword(adminUser, Constants.System.SystemAdminPassword);
+        adminUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
         CreatePSMUser(systemUser, adminUser);
         logger.LogInformation("Created default admin user");
         seedingOccured = true;
         SaveChanges();
       }
 
-      SaveChanges();
+      AdminUser  = adminUser;
+      SystemUser = systemUser;
+
       return seedingOccured;
     }
 
@@ -68,25 +72,12 @@ namespace PSM.Core.Core.Database {
       if(!toCreate.PermissionSet.AsList().All(initiator.PermissionSet.AsList().Contains))
         return PSMResponse.NoPermission;
       Users.Add(toCreate);
-      toCreate.PermissionSet.MapOwner(this);
       PermissionSets.Add(toCreate.PermissionSet);
       SaveChanges();
       return PSMResponse.Ok;
     }
 
-    public bool CheckPermission(User user, PSMPermission permission) {
-      if(user.PermissionSet is not null)
-        return user.PermissionSet.Contains(permission);
-      // If their permission set doesnt exist attempt to locate their set in the db, or create one if not found
-      if(PermissionSets.FirstOrDefault(set => set.Id == user.Id) is not { } userSet) {
-        userSet = new PermissionSet { Id = user.Id, PermissionString = "" };
-        PermissionSets.Add(userSet);
-        SaveChanges();
-      }
-
-      userSet.MapOwner(this);
-      return CheckPermission(user, permission);
-    }
+    public bool CheckPermission(User user, PSMPermission permission) => user.PermissionSet.Contains(permission);
 
     public PSMResponse PermissionGrant(User initiator, User user, PSMPermission permission) {
       if(!CheckPermission(initiator, permission) || !CheckPermission(initiator, PSMPermission.UserModify))
