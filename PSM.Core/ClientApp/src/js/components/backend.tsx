@@ -1,7 +1,9 @@
 import React from "react";
 
 export default class Backend {
-  private constructor(name: string) {
+  private constructor(name: string | undefined = undefined) {
+    if (name === undefined)
+      return
     Backend.backends[name] = this;
   }
 
@@ -9,6 +11,10 @@ export default class Backend {
 
   public static Get(name: string): Backend {
     return Backend.backends[name] ?? new Backend(name);
+  }
+
+  public static GetPrivate(): Backend {
+    return new Backend();
   }
 
   public static readonly Global: Backend = new Backend("global");
@@ -20,7 +26,11 @@ export default class Backend {
     this.backendState[valueName] = value;
     const listeners: React.Component[] = this.backendListeners[valueName];
     if (listeners === undefined) return;
-    listeners.forEach((listener) => { if (listener) { listener.forceUpdate() } });
+    listeners.forEach((listener) => {
+      if (listener) {
+        listener.forceUpdate()
+      }
+    });
   }
 
   private pushListener(valueName: string, listener: React.Component) {
@@ -34,7 +44,7 @@ export default class Backend {
   public useBackend<T>(
     caller: React.Component,
     variableName: string,
-    defaultValue: T|undefined = undefined
+    defaultValue: T | undefined = undefined
   ): [T | undefined, (value: T) => void] {
     const backendValue = this.backendState[variableName] ?? defaultValue;
     if (backendValue === defaultValue)
