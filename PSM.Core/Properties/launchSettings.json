@@ -27,7 +27,6 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "commandLineArgs": "NO_WDS",
       "applicationUrl": "http://localhost:5063",
       "dotnetRunMessages": true
     },
