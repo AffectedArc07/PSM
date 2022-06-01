@@ -20,7 +20,7 @@ public class ClientTokenModel : ModelBase {
   /// </summary>
   public int userId { get; set; }
 
-  protected override bool ValidateModel() {
+  public override bool ValidateModel() {
     if(ExpiresAt!.Value.CompareTo(DateTimeOffset.UtcNow) <= 0)
       return false;
 

@@ -18,7 +18,7 @@ public class ClientModel : ModelBase {
   /// </summary>
   public ulong? UserID;
 
-  protected override bool ValidateModel() {
+  public override bool ValidateModel() {
     if(Username is null || Password is null || CredentialHash is null)
       return false;
 

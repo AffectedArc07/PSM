@@ -4,5 +4,5 @@ public class ClientLoginResponseModel : ModelBase {
   public ClientModel?      Client;
   public ClientTokenModel? TokenResponse;
 
-  protected override bool ValidateModel() => Client is { } && TokenResponse is { };
+  public override bool ValidateModel() => Client is { } && TokenResponse is { };
 }
