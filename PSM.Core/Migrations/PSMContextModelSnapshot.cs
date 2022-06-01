@@ -19,6 +19,21 @@ namespace PSM.Core.Migrations
                 .HasAnnotation("ProductVersion", "6.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("PSM.Core.Models.Database.PermissionSet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("PermissionString")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("permission_sets");
+                });
+
             modelBuilder.Entity("PSM.Core.Models.Database.User", b =>
                 {
                     b.Property<int>("Id")
@@ -69,21 +84,6 @@ namespace PSM.Core.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("user_tokens");
-                });
-
-            modelBuilder.Entity("PSM.Core.Models.PermissionSet", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("PermissionString")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("permission_sets");
                 });
 
             modelBuilder.Entity("PSM.Core.Models.Database.User", b =>
