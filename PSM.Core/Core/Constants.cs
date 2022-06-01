@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using PSM.Core.Models.API;
 
 namespace PSM.Core.Core {
   public static class Constants {
@@ -35,8 +36,8 @@ namespace PSM.Core.Core {
       private static byte[]? _byteMap;
     }
 
-    public static string  AllPermissions => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
-    public static ILogger AppLog         { get; set; } = null!;
+    public static string  AdminPermissionString => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
+    public static ILogger AppLog                { get; set; } = null!;
 
     public static string              ConvertToPermissionString(this IEnumerable<PSMPermission> permList)   => permList.Distinct().Aggregate("", (current, psmPermission) => $"{current};{(ulong)psmPermission}").Trim(';');
     public static List<PSMPermission> ConvertToPermissionList(this   string                     permString) => permString.Split(";").Select(Enum.Parse<PSMPermission>).Distinct().ToList();
@@ -53,15 +54,39 @@ namespace PSM.Core.Core {
         return context.Connection.RemoteIpAddress.ToString();
       return forwardedFor;
     }
-  }
 
+    public static PermissionModel[] AllPermissions() {
+      return new[] {
+                     new PermissionModel {
+                                           Id          = (int)PSMPermission.UserCreate,
+                                           Name        = "UserCreate",
+                                           Description = "Create a new User",
+                                         },
+                     new PermissionModel {
+                                           Id          = (int)PSMPermission.UserModify,
+                                           Name        = "UserModify",
+                                           Description = "Modify an existing User",
+                                         },
+                     new PermissionModel {
+                                           Id          = (int)PSMPermission.UserEnable,
+                                           Name        = "UserEnable",
+                                           Description = "Enable or Disable an existing User",
+                                         },
+                     new PermissionModel {
+                                           Id          = (int)PSMPermission.UserList,
+                                           Name        = "UserList",
+                                           Description = "List all Users",
+                                         },
+                   };
+    }
+  }
 
   public enum PSMPermission : ulong {
     // User permissions
     UserCreate = 1,
-    UserDelete = 2,
-    UserModify = 3,
-    UserEnable = 4
+    UserModify = 2,
+    UserEnable = 3,
+    UserList   = 4
   }
 
   public enum PSMResponse {
