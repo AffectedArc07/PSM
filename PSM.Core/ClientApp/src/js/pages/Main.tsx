@@ -7,8 +7,49 @@ import {InstanceView} from "./InstanceView";
 
 const {Content, Sider} = Layout;
 
+export type AppError = {
+  error: string
+  recoverable: boolean
+  on_dismiss?: () => void
+}
+
 export class Main extends React.Component {
+  componentDidMount() {
+    Main._local = this
+  }
+
+  private app_errors: AppError[] = []
+  private static _local: Main
+
+  public static app_error(error: AppError) {
+    const instance = Main._local
+    instance.app_errors.push(error)
+    instance.forceUpdate()
+  }
+
+  private render_errors(): JSX.Element {
+    const recoverable = !this.app_errors.find(error => !error.recoverable)
+    console.log(`Recoverable: ${recoverable}`)
+    return (<>
+      <h1 style={{"float": "none", "margin": "0 auto"}}>Warning: application errors have been caught</h1>
+      <hr/>
+      {this.app_errors.map(error => (<div key={error.error}>
+        <p>{recoverable ? (
+          <button onClick={() => {
+            this.app_errors.splice(this.app_errors.indexOf(error), 1)
+            if (error.on_dismiss) error.on_dismiss()
+            this.forceUpdate()
+          }}>Dismiss</button>) : (<button disabled={true}>Dismiss - Non-Recoverable Errors Exist</button>)}
+          {" "}{error.error}</p>
+      </div>))}
+      {recoverable ? "" : (<button onClick={() => document.location.reload()}>Reload Application</button>)}
+    </>)
+  }
+
   render() {
+    if (this.app_errors.length !== 0)
+      return this.render_errors()
+
     // Get our tab
     const [navTab, setNavTab] = Backend.Global.useBackend(this, "navTab", "instances");
 
