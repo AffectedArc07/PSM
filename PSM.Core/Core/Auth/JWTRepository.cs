@@ -1,7 +1,9 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using System.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using PSM.Core.Core.Database;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using PSM.Core.Models.Auth;
 using PSM.Core.Models.Database;
 
@@ -45,7 +47,7 @@ namespace PSM.Core.Core.Auth {
 
       _dbc.SaveChanges();
 
-      return new ClientTokenModel { Token = token, ExpiresAt = expirationTime, userId = user.Id};
+      return new ClientTokenModel { Token = token, ExpiresAt = expirationTime, userId = user.Id };
     }
 
     public User? UserFromContext(HttpContext context) {
@@ -54,7 +56,7 @@ namespace PSM.Core.Core.Auth {
         return null;
       auth = auth[6..];
 
-      User? user; 
+      User? user;
       if(auth[0] != ' ') {
         var lastP    = auth.IndexOf(')');
         var idString = auth[1..lastP];
@@ -79,6 +81,7 @@ namespace PSM.Core.Core.Auth {
         user = _dbc.Users.First(dbUser => dbUser.Id == userToken.Id);
       }
 
+      user.PermissionSet = _dbc.PermissionSets.Find(user.Id);
       return user.Enabled ? user : null;
     }
   }
