@@ -1,27 +1,46 @@
 ﻿import React from "react";
-import Backend from "./backend";
 
-export default class NavigationBar extends React.Component {
+/// NavigationButton type, navbar expects all names to be unique
+export type NavigationButton = {
+  name: string
+  callback: () => void
+}
+
+type NavigationBarProps = {
+  buttons: NavigationButton[]
+  selected_button: NavigationButton | undefined
+  disabled: boolean | undefined
+}
+
+type NavigationBarState = {
+  active_button: string | undefined
+}
+
+export default class NavigationBar extends React.Component<NavigationBarProps, NavigationBarState> {
   render() {
-    const [navTab, setNavTab] = Backend.Global.useBackend(this, "navTab", 0);
-    const [navTabs] = Backend.Global.useBackend<string[]>(this, "navTabs", []);
-    if (navTabs === undefined) {
-      console.error("No nav tabs for global nav bar")
-      return "Failed to load NavBar";
+    if (!this.props.buttons || this.props.buttons.length === 0) {
+      return (<p>No Navigation Elements</p>)
     }
+    const active_button = this.state?.active_button || this.props.selected_button?.name
+    console.log(`Rendering. state: '${this.state?.active_button}' props: '${this.props.selected_button}'`)
+    console.log(`Active button: ${active_button}`)
     return (
-      <div id="navbar">
-        <ul>
-          {navTabs.map((tab) => (
-            <li
-              id={navTab === navTabs.indexOf(tab) ? "selected" : "notSelected"}
-              onClick={() => setNavTab(navTabs.indexOf(tab))}
-              key={tab}
-            >
-              {tab}
-            </li>
-          ))}
-        </ul>
+      <div>
+        {this.props.buttons.map(button => (
+          <button key={button.name}
+                  onClick={() => {
+                    if (button.name === active_button) {
+                      console.log(`attempting to click already active button`)
+                      return
+                    }
+                    button.callback();
+                    this.setState({active_button: button.name})
+                  }}
+                  disabled={this.props.disabled || button.name === active_button}
+                  color={button.name === active_button ? '#f00' : '#00f'}>
+            {button.name}
+          </button>
+        ))}
       </div>
     );
   }
