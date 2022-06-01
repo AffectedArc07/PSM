@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using PSM.Core.Core.Database;
 
 namespace PSM.Core.Models.Database;
 
@@ -6,8 +7,8 @@ namespace PSM.Core.Models.Database;
 public class User {
   public int    Id           { get; set; }
   public bool   Enabled      { get; set; }
-  public string Username     { get; set; }
-  public string PasswordHash { get; set; }
+  public string Username     { get; set; } = null!;
+  public string PasswordHash { get; set; } = null!;
   public User?  CreatedBy    { get; set; }
 
   [NotMapped]
