@@ -3,5 +3,5 @@
 public class ServerInfoModel : ModelBase {
   public string? ServerVersion, CurrentUsername;
 
-  protected override bool ValidateModel() => true; // We don't do any validation here.
+  public override bool ValidateModel() => true; // We don't do any validation here.
 }
