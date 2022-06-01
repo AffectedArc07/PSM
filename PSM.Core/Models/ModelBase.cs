@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Runtime.Serialization;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -11,7 +12,10 @@ public abstract class ModelBase {
   /// This method should perform data validation to ensure all data is correct and valid.
   /// </summary>
   /// <returns>Whether validation was successful.</returns>
-  protected abstract bool ValidateModel();
+  public virtual bool ValidateModel() {
+    var fields = GetType().GetFields().Where(info => info.IsPublic && !info.IsStatic);
+    return fields.All(field => field.GetValue(this) != null);
+  }
 
   public          string Jsonify(bool pretty = false) => JsonConvert.SerializeObject(this, pretty ? Formatting.Indented : Formatting.None);
   public override string ToString()                   => Jsonify();
