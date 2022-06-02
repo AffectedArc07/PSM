@@ -87,6 +87,11 @@ namespace PSM.Core.Core {
                                                                           Name        = "UserList",
                                                                           Description = "List all Users",
                                                                         },
+               PSMPermission.UserRename => new PermissionInformationModel {
+                                                                            Id = (int)PSMPermission.UserRename,
+                                                                            Name = "UserRename",
+                                                                            Description = "Change the username of a User"
+                                                                          },
                _ => throw new ArgumentException(null, nameof(permission))
              };
 
@@ -100,10 +105,11 @@ namespace PSM.Core.Core {
     UserModify = 2,
     UserEnable = 3,
     UserList   = 4,
+    UserRename = 5,
   }
 
   public enum PSMResponse {
-    Ok, NotFound, NoPermission
+    Ok, NotFound, NoPermission, Conflict
   }
 
   public class PSMEqualityComparer : IEqualityComparer<PSMPermission> {

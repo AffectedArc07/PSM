@@ -11,9 +11,11 @@ namespace PSM.Core.Core.Database {
     public DbSet<PermissionSet> PermissionSets { get; set; } = null!;
     public DbSet<UserToken>     UserTokens     { get; set; } = null!;
 
-    public User? GetUser(int userID) {
+    public User? GetUser(int userID, bool includeDisabled = false) {
       var user = Users.Find(userID);
       if(user is null)
+        return null;
+      if(user.Disabled && !includeDisabled)
         return null;
       user.PermissionSet = PermissionSets.Find(userID) ?? PermissionSets.Add(new PermissionSet { Id = userID, PermissionString = "", UserOwner = user }).Entity;
       SaveChanges();
@@ -47,8 +49,9 @@ namespace PSM.Core.Core.Database {
                                 Username     = Constants.System.SystemUsername,
                                 PasswordHash = "_", // Impossible to get via hashes
                               };
-        systemUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
+        systemUser.PermissionSet = new PermissionSet { PermissionString = Constants.AdminPermissionString };
         Users.Add(systemUser);
+        PermissionSets.Add(systemUser.PermissionSet);
         logger.LogInformation("Created system user");
         seedingOccured = true;
         SaveChanges();
@@ -60,23 +63,29 @@ namespace PSM.Core.Core.Database {
                                Username  = Constants.System.SystemAdminUsername,
                                CreatedBy = systemUser,
                              };
-        adminUser.PasswordHash                   = new PasswordHasher<User>().HashPassword(adminUser, Constants.System.SystemAdminPassword);
-        adminUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
+        adminUser.PasswordHash = new PasswordHasher<User>().HashPassword(adminUser, Constants.System.SystemAdminPassword);
         CreatePSMUser(systemUser, adminUser);
+        adminUser.PermissionSet.PermissionString = Constants.AdminPermissionString;
         logger.LogInformation("Created default admin user");
         seedingOccured = true;
         SaveChanges();
       }
 
-      AdminUser  = adminUser;
       SystemUser = systemUser;
+      AdminUser  = adminUser;
 
       return seedingOccured;
     }
 
+    /// <summary>
+    /// Creates a new user with the information provided in the toCreate parameter
+    /// The userID will automatically be adjusted to be the next valid userID
+    /// </summary>
     public PSMResponse CreatePSMUser(User initiator, User toCreate) {
       if(!CheckPermission(initiator, PSMPermission.UserCreate))
         return PSMResponse.NoPermission;
+      if(Users.Any(dbUser => dbUser.Username.ToLower().Equals(toCreate.Username)))
+        return PSMResponse.Conflict;
       toCreate.Id = Users.Max(dbUser => dbUser.Id) + 1;
       Users.Add(toCreate);
       SaveChanges();

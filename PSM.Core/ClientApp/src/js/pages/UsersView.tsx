@@ -2,6 +2,7 @@ import React from 'react';
 import {API_USER} from "../core/api_users";
 import NavigationBar, {NavigationButton} from "../components/navigation_bar";
 import {PermissionInformationModel, UserDetailedInformationModel, UserInformationModel} from "../data_models";
+import Permissions from "../helpers/permissions";
 
 type UsersViewProps = {}
 
@@ -11,6 +12,7 @@ type UsersViewState = {
   active_page: number
   permission_modals: PermissionInformationModel[]
   edit_user_data: UserDetailedInformationModel
+  edit_user_original: UserDetailedInformationModel
   logged_in_user: UserDetailedInformationModel
 }
 
@@ -94,11 +96,21 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
     const default_user_actions = [
       <button
         key='user_button_edit'
-        onClick={() => this.setState({active_page: PageConstants.EDIT_USER})}>
+        disabled={!this.state.logged_in_user.permission_check(Permissions.UserModify)}
+        onClick={() => {
+          UserDetailedInformationModel.load_from_api(this.state.active_user).then(entry => {
+            this.setState({
+              active_page: PageConstants.EDIT_USER,
+              edit_user_original: entry,
+              edit_user_data: entry.clone()
+            })
+          })
+        }}>
         Edit User
       </button>,
       <button
         key='user_button_create'
+        disabled={!this.state.logged_in_user.permission_check(Permissions.UserCreate)}
         onClick={() => this.setState({active_page: PageConstants.CREATE_USER})}>
         Create User
       </button>
@@ -106,11 +118,13 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
     const edit_user_actions = [
       <button
         key='user_edit_submit'
+        disabled={!this.do_user_edit_check_changes()}
         onClick={() => this.do_user_edit_submit()}>
         Submit User Changes
       </button>,
       <button
         key='user_edit_revert'
+        disabled={!this.do_user_edit_check_changes()}
         onClick={() => this.do_user_edit_revert()}>
         Revert User Changes
       </button>
@@ -162,17 +176,26 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
 
   private render_edit_user(): JSX.Element {
     let user_data: UserDetailedInformationModel = this.state.edit_user_data
-    if (!user_data || user_data.username !== this.state.active_user.username) {
-      UserDetailedInformationModel.load_from_api(this.state.active_user).then((data) => {
-        this.setState({edit_user_data: data})
-      })
-      return <p>Loading User</p>
+    if (!user_data || user_data.userID !== this.state.edit_user_original.userID) {
+      this.setState({edit_user_data: this.state.edit_user_original.clone()})
+      return <p>Loading</p>
     }
     const data_editable = user_data.is_user_data_editable(this.state.logged_in_user)
+    console.log(`editable: ${data_editable}`)
+    console.log(`user can rename: ${this.state.logged_in_user.permission_check(Permissions.UserRename)}`)
 
     return (<div>
-        <p>Username: <input disabled={true} readOnly={true} value={user_data.username}/></p>
-        <p>Enabled: <input type={"checkbox"} disabled={!data_editable} readOnly={!data_editable}
+        <p>Username: <input
+          disabled={!data_editable || !this.state.logged_in_user.permission_check(Permissions.UserRename)}
+          readOnly={!data_editable}
+          defaultValue={user_data.username}
+          onChange={(value) => {
+            user_data.username = value.target.value
+            this.setState({edit_user_data: user_data})
+          }}/></p>
+        <p>Enabled: <input type={"checkbox"}
+                           disabled={!data_editable || !this.state.logged_in_user.permission_check(Permissions.UserEnable)}
+                           readOnly={!data_editable}
                            checked={user_data.enabled}
                            onChange={(value) => {
                              user_data.enabled = value.target.checked
@@ -183,7 +206,7 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
           <p key={permission_modal.name}>{permission_modal.name} <input type={"checkbox"}
                                                                         checked={user_data.permission_check(permission_modal.id)}
                                                                         readOnly={!data_editable}
-                                                                        disabled={!data_editable}
+                                                                        disabled={!data_editable || !this.state.logged_in_user.permission_check(permission_modal.id)}
                                                                         title={permission_modal.description}
                                                                         onChange={(value) => {
                                                                           if (value.target.checked)
@@ -196,6 +219,17 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
         ))}</div>
       </div>
     )
+  }
+
+  private do_user_edit_check_changes() {
+    const current = this.state.edit_user_data
+    const actual = this.state.edit_user_original
+    console.log(current)
+    console.log(actual)
+    for (const key in current)
+      if (current[key] !== actual[key])
+        return true
+    return false
   }
 
   private do_user_edit_revert() {

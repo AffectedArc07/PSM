@@ -55,15 +55,17 @@ public class UserController : Controller {
       return Forbid();
     if(!HttpContext.Request.Form.TryGetValue("username", out var username) || username.Count != 1)
       return Problem();
-    if(_dbc.CreatePSMUser(user, new User {
-                                           Username     = username[0],
-                                           CreatedBy    = user,
-                                           Enabled      = false,
-                                           PasswordHash = "_"
-                                         }) !=
-       PSMResponse.Ok)
-      return Problem();
-    return Ok(_dbc.Users.First(dbUser => dbUser.Username.Equals(username)).GetInformationModel());
+    var creating = new User {
+                              Username  = username[0],
+                              CreatedBy = user,
+                              Enabled   = false
+                            };
+    return _dbc.CreatePSMUser(user, creating) switch {
+             PSMResponse.Conflict     => Conflict(),
+             PSMResponse.NoPermission => Forbid(),
+             PSMResponse.Ok           => Ok(creating.GetInformationModel()),
+             _                        => Problem()
+           };
   }
 
   [HttpPut("{userID:int}")]
@@ -77,6 +79,12 @@ public class UserController : Controller {
       return Conflict();
     if(target.Enabled != userUpdate.enabled && !_dbc.CheckPermission(user, PSMPermission.UserEnable))
       return Forbid();
+    if(!target.Username.Equals(userUpdate.username)) {
+      if(!_dbc.CheckPermission(user, PSMPermission.UserRename))
+        return Forbid();
+      if(_dbc.Users.Any(dbUser => dbUser.Username.Equals(userUpdate.username)))
+        return Conflict();
+    }
 
     var current   = target.PermissionSet.AsList();
     var expected  = userUpdate.permissions.ConvertToPermissionList();
@@ -87,7 +95,8 @@ public class UserController : Controller {
       return Forbid();
     target.PermissionSet.PermissionString = expected.ConvertToPermissionString();
 
-    target.Enabled = userUpdate.enabled;
+    target.Enabled  = userUpdate.enabled;
+    target.Username = userUpdate.username;
     _dbc.SaveChanges();
     return Ok();
   }

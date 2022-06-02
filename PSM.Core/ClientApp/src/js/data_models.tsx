@@ -41,6 +41,15 @@ export class UserDetailedInformationModel {
     }
   }
 
+  public clone(): UserDetailedInformationModel {
+    const clone = new UserDetailedInformationModel()
+    clone.userID = this.userID
+    clone.userPermissions = this.userPermissions
+    clone.username = this.username
+    clone.enabled = this.enabled
+    return clone
+  }
+
   private perms_as_list(): number[] {
     const permArray: number[] = []
     this.userPermissions.split(";").filter(onlyUnique).forEach(perm => permArray.push(Number.parseInt(perm)))
