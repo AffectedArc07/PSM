@@ -1,6 +1,6 @@
 ﻿namespace PSM.Core.Models.API;
 
-public class PermissionModel : ModelBase {
+public class PermissionInformationModel : ModelBase {
   /// <summary>
   /// Name of the permission
   /// </summary>

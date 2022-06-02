@@ -54,7 +54,9 @@
 	
   <ItemGroup>
     <TypeScriptCompile Include="ClientApp\src\js\components\backend.tsx" />
+    <TypeScriptCompile Include="ClientApp\src\js\components\helpers.tsx" />
     <TypeScriptCompile Include="ClientApp\src\js\components\navigation_bar.tsx" />
+    <TypeScriptCompile Include="ClientApp\src\js\data_models.tsx" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

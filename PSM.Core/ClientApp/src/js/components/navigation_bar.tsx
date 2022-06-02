@@ -22,17 +22,12 @@ export default class NavigationBar extends React.Component<NavigationBarProps, N
       return (<p>No Navigation Elements</p>)
     }
     const active_button = this.state?.active_button || this.props.selected_button?.name
-    console.log(`Rendering. state: '${this.state?.active_button}' props: '${this.props.selected_button}'`)
-    console.log(`Active button: ${active_button}`)
     return (
       <div>
         {this.props.buttons.map(button => (
           <button key={button.name}
                   onClick={() => {
-                    if (button.name === active_button) {
-                      console.log(`attempting to click already active button`)
-                      return
-                    }
+                    if (button.name === active_button) return
                     button.callback();
                     this.setState({active_button: button.name})
                   }}

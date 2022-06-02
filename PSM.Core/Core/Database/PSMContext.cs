@@ -7,9 +7,18 @@ namespace PSM.Core.Core.Database {
   [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
   public class PSMContext : DbContext {
     public PSMContext(DbContextOptions<PSMContext> options) : base(options) { }
-    public        DbSet<User>          Users          { get; set; } = null!;
-    public        DbSet<PermissionSet> PermissionSets { get; set; } = null!;
-    public        DbSet<UserToken>     UserTokens     { get; set; } = null!;
+    public DbSet<User>          Users          { get; set; } = null!;
+    public DbSet<PermissionSet> PermissionSets { get; set; } = null!;
+    public DbSet<UserToken>     UserTokens     { get; set; } = null!;
+
+    public User? GetUser(int userID) {
+      var user = Users.Find(userID);
+      if(user is null)
+        return null;
+      user.PermissionSet = PermissionSets.Find(userID) ?? PermissionSets.Add(new PermissionSet { Id = userID, PermissionString = "", UserOwner = user }).Entity;
+      SaveChanges();
+      return user;
+    }
 
     public User SystemUser = null!, AdminUser = null!;
 
@@ -68,11 +77,14 @@ namespace PSM.Core.Core.Database {
     public PSMResponse CreatePSMUser(User initiator, User toCreate) {
       if(!CheckPermission(initiator, PSMPermission.UserCreate))
         return PSMResponse.NoPermission;
-      // Check that all of the created users permissions are possessed by the initiator
-      if(!toCreate.PermissionSet.AsList().All(initiator.PermissionSet.AsList().Contains))
-        return PSMResponse.NoPermission;
+      toCreate.Id = Users.Max(dbUser => dbUser.Id) + 1;
       Users.Add(toCreate);
-      PermissionSets.Add(toCreate.PermissionSet);
+      SaveChanges();
+      PermissionSets.Add(toCreate.PermissionSet = new PermissionSet {
+                                                                      Id               = toCreate.Id,
+                                                                      PermissionString = "",
+                                                                      UserOwner        = toCreate
+                                                                    });
       SaveChanges();
       return PSMResponse.Ok;
     }

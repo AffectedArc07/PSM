@@ -69,7 +69,7 @@ namespace PSM.Core.Core.Auth {
           return null;
         if(userToken.TokenValue != auth)
           return null;
-        user = _dbc.Users.First(dbUser => dbUser.Id == id);
+        user = _dbc.GetUser(userToken.Id);
       } else {
         var originator = Constants.GetRemoteFromContext(context);
         if(_dbc.UserTokens.FirstOrDefault(dbToken => dbToken.OriginatorAddress == originator) is not { } userToken)
@@ -78,10 +78,9 @@ namespace PSM.Core.Core.Auth {
           return null;
         if(userToken.TokenValue != auth)
           return null;
-        user = _dbc.Users.First(dbUser => dbUser.Id == userToken.Id);
+        user = _dbc.GetUser(userToken.Id);
       }
 
-      user.PermissionSet = _dbc.PermissionSets.Find(user.Id);
       return user.Enabled ? user : null;
     }
   }

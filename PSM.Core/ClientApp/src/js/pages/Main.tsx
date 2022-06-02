@@ -29,7 +29,6 @@ export class Main extends React.Component {
 
   private render_errors(): JSX.Element {
     const recoverable = !this.app_errors.find(error => !error.recoverable)
-    console.log(`Recoverable: ${recoverable}`)
     return (<>
       <h1 style={{"float": "none", "margin": "0 auto"}}>Warning: application errors have been caught</h1>
       <hr/>
