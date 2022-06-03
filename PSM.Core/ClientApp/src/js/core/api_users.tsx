@@ -14,14 +14,23 @@ class api_users {
     this.API = apiManager;
   }
 
-  public async get_users(): Promise<UserInformationModel[]> {
+  public async get_users(get_disabled_users: boolean = false): Promise<UserInformationModel[]> {
     const resp = await this.API.axs.get("/api/users/list")
     if (resp.status === 200) {
-      return resp.data;
+      const users: UserInformationModel[] = resp.data;
+      return get_disabled_users ? users.filter(elem => elem.disabled) : users.filter(elem => !elem.disabled)
     } else {
       Main.app_error({error: `failed to update user list`, recoverable: false})
       return Promise<UserInformationModel[]>.reject();
     }
+  }
+
+  public async get_enabled_users() {
+    return this.get_users(false)
+  }
+
+  public async get_disabled_users() {
+    return this.get_users(true)
   }
 
   public async get_user(id: number): Promise<UserInformationModel> {
@@ -79,7 +88,7 @@ class api_users {
       permissions: user.userPermissions
     }
 
-    const resp = await this.API.axs.put(`/api/users/${user.userID}`, edit_model)
+    const resp = await this.API.axs.patch(`/api/users/${user.userID}`, edit_model)
     if (resp.status === 200) return;
     Main.app_error({error: `failed to update user`, recoverable: true})
     return Promise.reject()
