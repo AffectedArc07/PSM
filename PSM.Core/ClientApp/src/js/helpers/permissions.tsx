@@ -5,4 +5,5 @@ export default class Permissions {
   static readonly UserEnable: number = 3
   static readonly UserList: number = 4
   static readonly UserRename: number = 5
+  static readonly UserArchive: number = 6
 }

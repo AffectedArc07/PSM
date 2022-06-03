@@ -6,6 +6,7 @@ export class UserInformationModel {
   username: string
   userID: number
   enabled: boolean
+  archived: boolean
 }
 
 export class PermissionInformationModel {
@@ -19,6 +20,7 @@ export class UserDetailedInformationModel {
   userID: number
   userPermissions: string
   enabled: boolean
+  archived: boolean
 
   public static async load_from_api(user: UserInformationModel): Promise<UserDetailedInformationModel> {
     const perms = await API_USER.get_user_permissions(user)
@@ -29,6 +31,7 @@ export class UserDetailedInformationModel {
     model.username = user_details.username
     model.userID = user_details.userID
     model.enabled = user_details.enabled
+    model.archived = user_details.archived
     model.set_perms_from_list(perms.map(perm => perm.id).sort())
     return model
   }
@@ -38,6 +41,7 @@ export class UserDetailedInformationModel {
       username: this.username,
       userID: this.userID,
       enabled: this.enabled,
+      archived: this.archived
     }
   }
 

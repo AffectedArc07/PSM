@@ -29,7 +29,7 @@ class api_users {
     return this.get_users(false)
   }
 
-  public async get_disabled_users() {
+  public async get_archived_users() {
     return this.get_users(true)
   }
 
@@ -91,6 +91,15 @@ class api_users {
     const resp = await this.API.axs.patch(`/api/users/${user.userID}`, edit_model)
     if (resp.status === 200) return;
     Main.app_error({error: `failed to update user`, recoverable: true})
+    return Promise.reject()
+  }
+
+  /// Returns true if user archived, false if user un-archived
+  public async toggle_user_archive(user: UserInformationModel) : Promise<boolean> {
+    const resp = await this.API.axs.delete(`/api/users/${user.userID}`)
+    if (resp.status === 200) return true;
+    if (resp.status === 201) return false;
+    Main.app_error({error: `failed to archive user`, recoverable: true})
     return Promise.reject()
   }
 }

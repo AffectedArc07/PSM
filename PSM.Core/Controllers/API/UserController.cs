@@ -70,7 +70,7 @@ public class UserController : Controller {
 
   [HttpDelete("{userID:int}")]
   public IActionResult ArchiveUser(int userID) {
-    if(_jwt.UserFromContext(HttpContext) is not { } user || !_dbc.CheckPermission(user, PSMPermission.UserDisable))
+    if(_jwt.UserFromContext(HttpContext) is not { } user || !_dbc.CheckPermission(user, PSMPermission.UserArchive))
       return Forbid();
     if(_dbc.GetUser(userID) is not { } target)
       return NotFound();

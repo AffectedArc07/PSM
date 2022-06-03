@@ -61,7 +61,8 @@ namespace PSM.Core.Core {
       return new UserInformationModel {
                                         Enabled  = user.Enabled,
                                         UserID   = user.Id,
-                                        Username = user.Username
+                                        Username = user.Username,
+                                        Archived = user.Archived
                                       };
     }
 
@@ -88,24 +89,28 @@ namespace PSM.Core.Core {
                                                                           Description = "List all Users",
                                                                         },
                PSMPermission.UserRename => new PermissionInformationModel {
-                                                                            Id = (int)PSMPermission.UserRename,
-                                                                            Name = "UserRename",
+                                                                            Id          = (int)PSMPermission.UserRename,
+                                                                            Name        = "UserRename",
                                                                             Description = "Change the username of a User"
                                                                           },
+               PSMPermission.UserArchive => new PermissionInformationModel {
+                                                                             Id          = (int)PSMPermission.UserArchive,
+                                                                             Name        = "UserArchive",
+                                                                             Description = "Archive a User"
+                                                                           },
                _ => throw new ArgumentException(null, nameof(permission))
              };
-
-      ;
     }
   }
 
   public enum PSMPermission : ulong {
     // User permissions
-    UserCreate = 1,
-    UserModify = 2,
-    UserEnable = 3,
-    UserList   = 4,
-    UserRename = 5,
+    UserCreate  = 1,
+    UserModify  = 2,
+    UserEnable  = 3,
+    UserList    = 4,
+    UserRename  = 5,
+    UserArchive = 6,
   }
 
   public enum PSMResponse {
