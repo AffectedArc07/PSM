@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PSM.Core.Core.Database;
 
@@ -10,9 +11,10 @@ using PSM.Core.Core.Database;
 namespace PSM.Core.Migrations
 {
     [DbContext(typeof(PSMContext))]
-    partial class PSMContextModelSnapshot : ModelSnapshot
+    [Migration("20220603070717_disable_to_archive")]
+    partial class disable_to_archive
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

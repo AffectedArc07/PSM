@@ -11,11 +11,11 @@ namespace PSM.Core.Core.Database {
     public DbSet<PermissionSet> PermissionSets { get; set; } = null!;
     public DbSet<UserToken>     UserTokens     { get; set; } = null!;
 
-    public User? GetUser(int userID, bool includeDisabled = false) {
+    public User? GetUser(int userID, bool includeArchived = false) {
       var user = Users.Find(userID);
       if(user is null)
         return null;
-      if(user.Disabled && !includeDisabled)
+      if(user.Archived && !includeArchived)
         return null;
       user.PermissionSet = PermissionSets.Find(userID) ?? PermissionSets.Add(new PermissionSet { Id = userID, PermissionString = "", UserOwner = user }).Entity;
       SaveChanges();

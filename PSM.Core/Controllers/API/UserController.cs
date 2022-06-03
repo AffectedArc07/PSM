@@ -68,9 +68,21 @@ public class UserController : Controller {
            };
   }
 
-  [HttpPut("{userID:int}")]
+  [HttpDelete("{userID:int}")]
+  public IActionResult ArchiveUser(int userID) {
+    if(_jwt.UserFromContext(HttpContext) is not { } user || !_dbc.CheckPermission(user, PSMPermission.UserDisable))
+      return Forbid();
+    if(_dbc.GetUser(userID) is not { } target)
+      return NotFound();
+    if(target.Id == user.Id)
+      return Conflict();
+    target.Archived = !target.Archived;
+    _dbc.SaveChanges();
+    return target.Archived ? Ok() : StatusCode(201); // 201 - Created
+  }
+
+  [HttpPatch("{userID:int}")]
   public IActionResult UpdateUserDetails([FromBody] UserUpdateModel userUpdate, int userID) {
-    var form = new StreamReader(HttpContext.Request.Body).ReadToEndAsync().GetAwaiter().GetResult();
     if(_jwt.UserFromContext(HttpContext) is not { } user || !_dbc.CheckPermission(user, PSMPermission.UserModify))
       return Forbid();
     if(_dbc.GetUser(userID) is not { } target)

@@ -11,7 +11,7 @@ public class User {
   public string PasswordHash { get; set; } = "_";
   public User?  CreatedBy    { get; set; }
 
-  public bool Disabled { get; set; } = false;
+  public bool Archived { get; set; } = false;
 
   [NotMapped]
   public PermissionSet? PermissionSet { get; set; }
