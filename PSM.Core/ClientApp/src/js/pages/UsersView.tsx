@@ -7,7 +7,9 @@ import Permissions from "../helpers/permissions";
 type UsersViewProps = {}
 
 type UsersViewState = {
-  user_list: UserInformationModel[]
+  user_list_enabled: UserInformationModel[]
+  user_list_archived: UserInformationModel[]
+
   active_user: UserInformationModel
   active_page: number
   permission_modals: PermissionInformationModel[]
@@ -34,54 +36,18 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
   }
 
   public start_api_update() {
-    API_USER.get_users().then((value) => this.updateUserList(value));
-    API_USER.get_permissions().then((value) => this.updatePermissionModals(value))
-    API_USER.get_current_user().then((value) => this.setState({logged_in_user: value}))
-  }
-
-  private updateUserList(users: UserInformationModel[]) {
-    const setState = (): void => {
-      this.setState({user_list: users})
-    }
-    if (users.length === 0)
-      return
-    if (!this.state?.user_list)
-      return setState();
-    if (users.length !== this.state.user_list.length)
-      return setState()
-    const newUsers = users.map(user => user.username);
-    const oldUsers = this.state.user_list.map(user => user.username);
-    newUsers.forEach(newUser => {
-      if (!oldUsers.includes(newUser))
-        return setState()
-      oldUsers.splice(oldUsers.indexOf(newUser), 1);
-    })
-    oldUsers.forEach(oldUser => {
-      if (!newUsers.includes(oldUser))
-        return setState()
-    })
-  }
-
-  private updatePermissionModals(modals: PermissionInformationModel[]) {
-    const setState = (): void => {
-      this.setState({permission_modals: modals})
-    }
-    if (modals.length === 0)
-      return
-    if (!this.state?.permission_modals)
-      return setState();
-    if (modals.length !== this.state.permission_modals.length)
-      return setState()
-    const newModals = modals.map(modal => modal.name);
-    const oldModals = this.state.permission_modals.map(modal => modal.name);
-    newModals.forEach(newModal => {
-      if (!oldModals.includes(newModal))
-        return setState()
-      oldModals.splice(oldModals.indexOf(newModal), 1);
-    })
-    oldModals.forEach(oldModal => {
-      if (!newModals.includes(oldModal))
-        return setState()
+    Promise.all([
+      API_USER.get_enabled_users(),
+      API_USER.get_archived_users(),
+      API_USER.get_permissions(),
+      API_USER.get_current_user(),
+    ]).then(([enabled_users, disabled_users, permissions, current_user]) => {
+      this.setState({
+        user_list_enabled: enabled_users,
+        user_list_archived: disabled_users,
+        permission_modals: permissions,
+        logged_in_user: current_user,
+      })
     })
   }
 
@@ -127,6 +93,12 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
         disabled={!this.do_user_edit_check_changes()}
         onClick={() => this.do_user_edit_revert()}>
         Revert User Changes
+      </button>,
+      <button
+        key='user_edit_archive'
+        disabled={!this.state.logged_in_user.permission_check(Permissions.UserDisable)}
+        onClick={() => this.do_user_edit_archive()}>
+        <b>Archive User</b>
       </button>
     ]
     let ret: JSX.Element[] = [];
@@ -238,6 +210,16 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
     })
   }
 
+  private do_user_edit_archive() {
+    if (!window.confirm(`CONFIRM YOU WANT TO ARCHIVE USER`))
+      return
+    API_USER.toggle_user_archive(this.state.active_user).then((archived) => {
+      alert(archived ? `User Archived` : `User Restored`)
+      this.start_api_update()
+      this.setState({active_page: PageConstants.DEFAULT_PAGE})
+    })
+  }
+
   private do_user_edit_submit() {
     API_USER.modify_user(this.state.edit_user_data).then(() => {
       this.start_api_update()
@@ -270,12 +252,12 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
     if (!this.state?.logged_in_user) {
       return <p>Failed to retrieve logged in user</p>
     }
-    if (!this.state?.user_list || this.state.user_list.length === 0) {
+    if (!this.state?.user_list_enabled || this.state.user_list_enabled.length === 0) {
       return (
         <p>Loading</p>
       )
     }
-    const nav_map = this.state.user_list.map(user => {
+    const nav_map = this.state.user_list_enabled.map(user => {
       return {
         name: user.username,
         callback: () => {

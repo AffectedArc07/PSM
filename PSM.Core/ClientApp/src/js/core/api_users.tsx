@@ -14,11 +14,11 @@ class api_users {
     this.API = apiManager;
   }
 
-  public async get_users(get_disabled_users: boolean = false): Promise<UserInformationModel[]> {
+  public async get_users(get_archived_users: boolean = false): Promise<UserInformationModel[]> {
     const resp = await this.API.axs.get("/api/users/list")
     if (resp.status === 200) {
       const users: UserInformationModel[] = resp.data;
-      return get_disabled_users ? users.filter(elem => elem.disabled) : users.filter(elem => !elem.disabled)
+      return get_archived_users ? users.filter(elem => elem.archived) : users.filter(elem => !elem.archived)
     } else {
       Main.app_error({error: `failed to update user list`, recoverable: false})
       return Promise<UserInformationModel[]>.reject();
