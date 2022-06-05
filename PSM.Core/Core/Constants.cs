@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
+using PSM.Core.Core.Database.Tables;
+using PSM.Core.Core.Database.Tables.Abstract;
 using PSM.Core.Models.API;
-using PSM.Core.Models.Database;
 
 namespace PSM.Core.Core {
   public static class Constants {
@@ -19,6 +20,9 @@ namespace PSM.Core.Core {
       public const int UsernameMaximumLength = 64;
       public const int PasswordMinimumLength = 8;
       public const int PasswordMaximumLength = 64;
+
+      public const int SystemUserID = 1;
+      public const int AdminUserID  = 2;
     }
 
     public static class ExitCodes {
@@ -37,10 +41,9 @@ namespace PSM.Core.Core {
       private static byte[]? _byteMap;
     }
 
-    public static string  AdminPermissionString => Enum.GetValues<PSMPermission>().ToList().ConvertToPermissionString();
-    public static ILogger AppLog                { get; set; } = null!;
+    public static string AdminPermissionString { get; } = PermissionSet.PermissionListToString(Enum.GetValues<PSMPermission>());
 
-    public static string ConvertToPermissionString(this IEnumerable<PSMPermission> permList) => permList.DistinctBy(p => (int)p).Aggregate("", (c, p) => $"{c};{(int)p}").Trim(';');
+    public static ILogger AppLog { get; set; } = null!;
 
     public static List<PSMPermission> ConvertToPermissionList(this string permString) => permString.Trim(';').Split(';', StringSplitOptions.RemoveEmptyEntries).Select(v => (PSMPermission)int.Parse(v)).DistinctBy(p => (int)p).ToList();
 
@@ -103,7 +106,7 @@ namespace PSM.Core.Core {
     }
   }
 
-  public enum PSMPermission : ulong {
+  public enum PSMPermission {
     // User permissions
     UserCreate  = 1,
     UserModify  = 2,
@@ -111,19 +114,5 @@ namespace PSM.Core.Core {
     UserList    = 4,
     UserRename  = 5,
     UserArchive = 6,
-  }
-
-  public enum PSMResponse {
-    Ok, NotFound, NoPermission, Conflict
-  }
-
-  public class PSMEqualityComparer : IEqualityComparer<PSMPermission> {
-    public bool Equals(PSMPermission x, PSMPermission y) {
-      return x == y;
-    }
-
-    public int GetHashCode(PSMPermission obj) {
-      return obj.GetHashCode();
-    }
   }
 }

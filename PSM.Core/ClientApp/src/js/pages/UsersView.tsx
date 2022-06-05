@@ -96,7 +96,7 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
       </button>,
       <button
         key='user_edit_archive'
-        disabled={!this.state.logged_in_user.permission_check(Permissions.UserDisable)}
+        disabled={!this.state.logged_in_user.permission_check(Permissions.UserArchive)}
         onClick={() => this.do_user_edit_archive()}>
         <b>Archive User</b>
       </button>
@@ -140,7 +140,14 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
       <input disabled={!API_USER.create_user_username.length} type={"button"} value={"Create User"} onClick={() => {
         API_USER.create_user().then((new_user) => {
           this.start_api_update()
-          this.setState({active_user: new_user, active_page: PageConstants.EDIT_USER})
+          UserDetailedInformationModel.load_from_api(new_user).then(entry => {
+            this.setState({
+              active_user: new_user,
+              active_page: PageConstants.EDIT_USER,
+              edit_user_original: entry,
+              edit_user_data: entry.clone()
+            })
+          })
         })
       }}/>
     </form>)

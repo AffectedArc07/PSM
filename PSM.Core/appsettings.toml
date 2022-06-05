@@ -5,3 +5,10 @@ AllowedHosts = "*"
 Default = "Information"
 [Logging.LogLevel.Microsoft]
 AspNetCore = "Warning"
+
+[Database]
+Database = "psm_db"
+Username = "psmuser"
+Password = "pass"
+Address = "localhost"
+Port = 3306

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using MySqlConnector;
 using PSM.Core.Core;
 using PSM.Core.Core.Auth;
 using PSM.Core.Core.Database;
@@ -9,7 +10,7 @@ using Tomlyn.Extensions.Configuration;
 
 namespace PSM.Core {
   public static class Program {
-    public static void Main(string[] args) {
+    public static async Task Main(string[] args) {
       Console.WriteLine("Starting PSM.");
       // Logger outside of the host builder that we can use here
       var startup_logger = LoggerFactory.Create(configure => {
@@ -23,21 +24,46 @@ namespace PSM.Core {
       // Config right off the bat
       builder.Configuration.AddTomlFile("appsettings.toml");
 
-      var connstr = builder.Configuration.GetSection("Database").GetValue<string>("Connstring");
+      var sqlSection = builder.Configuration.GetSection("Database");
+
+      var sqlAddress  = sqlSection.GetValue<string>("Address");
+      var sqlPassword = sqlSection.GetValue<string>("Password");
+      var sqlUsername = sqlSection.GetValue<string>("Username");
+      var sqlPort     = sqlSection.GetValue<int>("Port");
+      var sqlDatabase = sqlSection.GetValue<string>("Database");
+
+      var conStr = $"User={sqlUsername};Password={sqlPassword};Database={sqlDatabase};Server={sqlAddress};Port={sqlPort};";
 
       startup_logger.LogInformation("Attempting to connect to database...");
 
-      // Try establish a DBCon ASAP
-      builder.Services.AddDbContext<PSMContext>(options => {
-                                                  try {
-                                                    options.UseMySql(connstr, ServerVersion.AutoDetect(connstr));
-                                                    startup_logger.LogInformation("Database connection successful");
-                                                  } catch(MySqlConnector.MySqlException ex) {
-                                                    startup_logger.LogCritical("Failed to connect to the MySQL/MariaDB Server: {Exception}", ex.ToString());
-                                                    startup_logger.LogCritical("This is a fatal error. PSM will now close");
-                                                    Environment.Exit(1);
-                                                  }
-                                                });
+      // Establish DBCons immediately
+      builder.Services.AddDbContext<UserContext>(options => {
+                                                   try {
+                                                     options.UseMySql(conStr, ServerVersion.AutoDetect(conStr));
+                                                     startup_logger.LogInformation("User Context established");
+                                                   } catch(MySqlException permEx) {
+                                                     startup_logger.LogCritical("Failed to establish User Context");
+                                                     startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
+                                                   }
+                                                 });
+      builder.Services.AddDbContext<InstanceContext>(options => {
+                                                       try {
+                                                         options.UseMySql(conStr, ServerVersion.AutoDetect(conStr));
+                                                         startup_logger.LogInformation("User Context established");
+                                                       } catch(MySqlException permEx) {
+                                                         startup_logger.LogCritical("Failed to establish User Context");
+                                                         startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
+                                                       }
+                                                     });
+      builder.Services.AddDbContext<PermissionContext>(options => {
+                                                         try {
+                                                           options.UseMySql(conStr, ServerVersion.AutoDetect(conStr));
+                                                           startup_logger.LogInformation("Permission Context established");
+                                                         } catch(MySqlException permEx) {
+                                                           startup_logger.LogCritical("Failed to establish Permission Context");
+                                                           startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
+                                                         }
+                                                       });
 
       // Add services
       builder.Services.AddMvc().AddNewtonsoftJson();
@@ -76,18 +102,16 @@ namespace PSM.Core {
       Constants.AppLog = app.Logger;
 
       using(var scope = app.Services.CreateScope()) {
-        var dbcon = scope.ServiceProvider.GetRequiredService<PSMContext>();
-        app.Logger.LogInformation("Migrating database.....");
-        dbcon.Database.Migrate();
-        app.Logger.LogInformation("Database schema migrated. Seeding default users...");
-        var users_seeded = dbcon.SeedPSMUsers(app.Logger);
-        if(users_seeded) {
-          app.Logger.LogInformation("Users seeded successfully");
-        } else {
-          app.Logger.LogInformation("No user seeding required");
-        }
+        var userDb = scope.ServiceProvider.GetRequiredService<UserContext>();
+        var permDb = scope.ServiceProvider.GetRequiredService<PermissionContext>();
+        var instDb = scope.ServiceProvider.GetRequiredService<InstanceContext>();
 
-        dbcon.MapAllUsers();
+        await userDb.Database.MigrateAsync();
+        await permDb.Database.MigrateAsync();
+        await instDb.Database.MigrateAsync();
+
+
+        await userDb.WithPermissionContext(permDb).EnsureDefaultUsers();
       }
 
       // Configure the HTTP request pipeline.
@@ -123,7 +147,7 @@ namespace PSM.Core {
       app.MapControllers();
 
       app.Logger.LogInformation("Finished initial startup");
-      app.Run();
+      await app.RunAsync();
     }
   }
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PSM.Core.Core.Auth;
-using PSM.Core.Models;
 using PSM.Core.Models.Server;
 
 namespace PSM.Core.Controllers.API {
@@ -22,16 +21,14 @@ namespace PSM.Core.Controllers.API {
     /// </summary>
     /// <returns>A user's username, or an error if their token is invalid.</returns>
     [HttpGet("info")]
-    public IActionResult GetUsername() {
-      var user = _auth.UserFromContext(HttpContext);
-      if(user == null)
+    public async Task<IActionResult> GetUsername() {
+      if(await _auth.UserFromContext(HttpContext) is not { } dbUser)
         return Unauthorized("Your user either doesn't exist, or is disabled.");
 
-      var serverInfoModel = new ServerInfoModel {
-                                                  CurrentUsername = user.Username,
-                                                  ServerVersion   = typeof(Program).Assembly.GetName().Version.ToString()
-                                                };
-      return Ok(serverInfoModel);
+      return Ok(new ServerInfoModel {
+                                      CurrentUsername = dbUser.Username,
+                                      ServerVersion   = typeof(Program).Assembly.GetName().Version.ToString()
+                                    });
     }
   }
 }
