@@ -1,4 +1,6 @@
 ﻿using System.Security.Cryptography;
+using Microsoft.OpenApi.Extensions;
+using Namotion.Reflection;
 using PSM.Core.Core.Database.Tables;
 using PSM.Core.Core.Database.Tables.Abstract;
 using PSM.Core.Models.API;
@@ -70,49 +72,190 @@ namespace PSM.Core.Core {
     }
 
     public static PermissionInformationModel GetInformationModel(this PSMPermission permission) {
-      return permission switch {
-               PSMPermission.UserCreate => new PermissionInformationModel {
-                                                                            Id          = (int)PSMPermission.UserCreate,
-                                                                            Name        = "UserCreate",
-                                                                            Description = "Create a new User",
-                                                                          },
-               PSMPermission.UserModify => new PermissionInformationModel {
-                                                                            Id          = (int)PSMPermission.UserModify,
-                                                                            Name        = "UserModify",
-                                                                            Description = "Modify an existing User",
-                                                                          },
-               PSMPermission.UserEnable => new PermissionInformationModel {
-                                                                            Id          = (int)PSMPermission.UserEnable,
-                                                                            Name        = "UserEnable",
-                                                                            Description = "Enable or Disable an existing User",
-                                                                          },
-               PSMPermission.UserList => new PermissionInformationModel {
-                                                                          Id          = (int)PSMPermission.UserList,
-                                                                          Name        = "UserList",
-                                                                          Description = "List all Users",
-                                                                        },
-               PSMPermission.UserRename => new PermissionInformationModel {
-                                                                            Id          = (int)PSMPermission.UserRename,
-                                                                            Name        = "UserRename",
-                                                                            Description = "Change the username of a User"
-                                                                          },
-               PSMPermission.UserArchive => new PermissionInformationModel {
-                                                                             Id          = (int)PSMPermission.UserArchive,
-                                                                             Name        = "UserArchive",
-                                                                             Description = "Archive a User"
-                                                                           },
-               _ => throw new ArgumentException(null, nameof(permission))
-             };
+      var pType   = permission.GetType();
+      var summary = pType.GetXmlDocsSummary();
+      return new PermissionInformationModel {
+                                              Name        = permission.GetDisplayName(),
+                                              Description = summary,
+                                              Id          = (int)permission,
+                                            };
     }
   }
 
   public enum PSMPermission {
-    // User permissions
-    UserCreate  = 1,
-    UserModify  = 2,
-    UserEnable  = 3,
-    UserList    = 4,
-    UserRename  = 5,
-    UserArchive = 6,
+    // -- Global Permissions -- \\
+    /// <summary>
+    /// Create a user
+    /// </summary>
+    UserCreate = 1,
+
+    /// <summary>
+    /// Change the username of a user
+    /// </summary>
+    UserRename = 2,
+
+    /// <summary>
+    /// Modify the permissions of a user
+    /// </summary>
+    UserEdit = 3,
+    
+    /// <summary>
+    /// Enable or disable a user
+    /// </summary>
+    UserEnable = 33,
+
+    /// <summary>
+    /// Archive or De-Archive a user
+    /// </summary>
+    UserArchive = 4,
+
+    // Instance
+    /// <summary>
+    /// Create a new instance
+    /// </summary>
+    InstanceCreate = 5,
+
+    /// <summary>
+    /// View the event log of any instance
+    /// </summary>
+    InstanceInvestigate = 6,
+
+    /// <summary>
+    /// View all instances regardless of permissions
+    /// </summary>
+    InstanceAdminView = 7,
+
+    /// <summary>
+    /// Grant self all permissions on any instance
+    /// </summary>
+    InstanceGrantAdminSelf = 8,
+
+    /// <summary>
+    /// Grant a specific user all permissions on any instance
+    /// </summary>
+    InstanceGrantAdminOther = 9,
+
+    // -- Instance Permissions -- \\
+    /// <summary>
+    /// Read the permission sets on an instance
+    /// </summary>
+    InstancePermissionRead = 10,
+
+    /// <summary>
+    /// Write and modify existing permission sets
+    /// </summary>
+    InstancePermissionWrite = 11,
+
+    /// <summary>
+    /// Read the event log of the repository and git actions
+    /// </summary>
+    InstanceRepoInvestigate = 12,
+
+    /// <summary>
+    /// Checkout a specific sha, branch, or tag
+    /// </summary>
+    InstanceRepoCheckoutSpecific = 13,
+
+    /// <summary>
+    /// Perform a hard reset on the local git state
+    /// </summary>
+    InstanceRepoHardReset = 14,
+
+    /// <summary>
+    /// Change the default branch of the repository
+    /// </summary>
+    InstanceRepoDefaultBranch = 15,
+
+    /// <summary>
+    /// Delete the local git state and repository
+    /// </summary>
+    InstanceRepoDelete = 16,
+
+    /// <summary>
+    /// Manage test merges on the repository
+    /// </summary>
+    InstanceRepoTestMerge = 17,
+
+    /// <summary>
+    /// I dont remember what this does, help
+    /// </summary>
+    InstanceRepoAdmin = 18,
+
+    /// <summary>
+    /// Overwrite git and repository credentials
+    /// Credentials are never readable by anyone
+    /// </summary>
+    InstanceRepoCredentials = 19,
+
+    /// <summary>
+    /// Change auto update settings
+    /// </summary>
+    InstanceRepoAutoUpdate = 20,
+
+    /// <summary>
+    /// Change automatic updates on submodules
+    /// </summary>
+    InstanceRepoSubmodule = 21,
+
+    // Byond
+    /// <summary>
+    /// Read the current BYOND information
+    /// </summary>
+    InstanceByondRead = 22,
+
+    /// <summary>
+    /// Read the BYOND event log
+    /// </summary>
+    InstanceByondInvestigate = 23,
+
+    /// <summary>
+    /// Install new BYOND versions
+    /// </summary>
+    InstanceByondInstall = 24,
+
+    /// <summary>
+    /// View all installed BYOND versions
+    /// </summary>
+    InstanceByondListInstalled = 25,
+
+    /// <summary>
+    /// View the information for DreamMaker
+    /// </summary>
+    InstanceDMRead = 26,
+
+    /// <summary>
+    /// View the DreamMaker event log
+    /// </summary>
+    InstanceDMInvestigate = 27,
+
+    /// <summary>
+    /// Start, or cancel, active deployments
+    /// </summary>
+    InstanceDMDeploy = 28,
+
+    /// <summary>
+    /// Modify the settings for DreamMaker
+    /// </summary>
+    InstanceDMConfiguration = 29,
+
+    /// <summary>
+    /// View all previous deployments and compile job history
+    /// </summary>
+    InstanceDMJobs = 30,
+
+    /// <summary>
+    /// Change the Security Level of DreamMaker
+    /// </summary>
+    InstanceDMSecurityLevel = 31,
+
+    /// <summary>
+    /// Change the API Validation requirements
+    /// </summary>
+    InstanceDMApi = 32,
+
+    /// <summary>
+    /// Change how long the API takes to validate before assuming a crash
+    /// </summary>
+    InstanceDMTimeout = 33,
   }
 }

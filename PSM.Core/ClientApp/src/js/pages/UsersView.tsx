@@ -181,7 +181,7 @@ export class UsersView extends React.Component<UsersViewProps, UsersViewState> {
                              this.setState({edit_user_data: user_data})
                            }}/></p>
         <p>PermissionString: <input disabled={true} readOnly={true} value={user_data.userPermissions}/></p>
-        <div title={"Permissions"}>{this.state.permission_modals.map(permission_modal => (
+        <div>{this.state.permission_modals.map(permission_modal => (
           <p key={permission_modal.name}>{permission_modal.name} <input type={"checkbox"}
                                                                         checked={user_data.permission_check(permission_modal.id)}
                                                                         readOnly={!data_editable}

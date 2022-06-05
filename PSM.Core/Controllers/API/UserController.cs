@@ -19,9 +19,6 @@ public class UserController : Controller {
   [HttpGet("list")]
   [ProducesResponseType(typeof(UserInformationModel[]), 200)]
   public async Task<IActionResult> ListUsers() {
-    if(await _jwt.UserFromContext(HttpContext) is not { } dbUser || !dbUser.GlobalPermissionSet.CheckPermission(PSMPermission.UserList))
-      return Forbid();
-
     return Ok((await _dbc.GetAllUsers()).Select(Constants.GetInformationModel));
   }
 
@@ -56,7 +53,7 @@ public class UserController : Controller {
       return Forbid();
     if(await _dbc.GetUser(userID) is not { } target)
       return NotFound();
-    if(target.Id == user.Id)
+    if(target.Id == user.Id || target.Id is Constants.System.SystemUserID or Constants.System.AdminUserID)
       return Conflict();
     target.Archived = !target.Archived;
     await _dbc.SaveChangesAsync();
@@ -65,7 +62,7 @@ public class UserController : Controller {
 
   [HttpPatch("{userID:int}")]
   public async Task<IActionResult> UpdateUserDetails([FromBody] UserUpdateModel userUpdate, int userID) {
-    if(await _jwt.UserFromContext(HttpContext) is not { } user || !user.GlobalPermissionSet.CheckPermission(PSMPermission.UserModify))
+    if(await _jwt.UserFromContext(HttpContext) is not { } user || !user.GlobalPermissionSet.CheckPermission(PSMPermission.UserEdit))
       return Forbid();
     if(await _dbc.GetUser(userID) is not { } target)
       return NotFound();

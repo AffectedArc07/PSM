@@ -27,7 +27,7 @@ public class PermissionController : Controller {
     if(await _jwtRepository.UserFromContext(HttpContext) is not { } user)
       return Problem("Unable to locate originator information");
 
-    if(!user.GlobalPermissionSet.CheckPermission(PSMPermission.UserModify))
+    if(!user.GlobalPermissionSet.CheckPermission(PSMPermission.UserEdit))
       return Unauthorized("You are not authorized to modify users");
 
     if(await _userContext.GetUser(userID) is not { } targetUser)
@@ -41,7 +41,7 @@ public class PermissionController : Controller {
   [HttpGet("list/{userID:int}")]
   [ProducesResponseType(typeof(PermissionInformationModel[]), 200)]
   public async Task<IActionResult> GetUserPermissions(int userID) {
-    if(await _jwtRepository.UserFromContext(HttpContext) is not { } user || !user.GlobalPermissionSet.CheckPermission(PSMPermission.UserModify))
+    if(await _jwtRepository.UserFromContext(HttpContext) is not { } user || !user.GlobalPermissionSet.CheckPermission(PSMPermission.UserEdit))
       return Forbid();
     if(await _userContext.GetUser(userID) is not { } dbUser)
       return NotFound();
