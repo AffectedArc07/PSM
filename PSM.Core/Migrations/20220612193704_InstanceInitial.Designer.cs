@@ -10,8 +10,8 @@ using PSM.Core.Database;
 namespace PSM.Core.Migrations
 {
     [DbContext(typeof(InstanceContext))]
-    [Migration("20220612184757_instance_refactor")]
-    partial class instance_refactor
+    [Migration("20220612193704_InstanceInitial")]
+    partial class InstanceInitial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

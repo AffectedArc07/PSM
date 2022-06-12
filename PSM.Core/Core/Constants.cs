@@ -81,7 +81,7 @@ namespace PSM.Core {
                                             };
     }
 
-    public static InstanceInformationModel GetInformationModel(this Instance instance) =>
+    public static InstanceInformationModel GetInformationModel(this Database.Tables.Instance instance) =>
       new() {
               ID   = instance.Id,
               Name = instance.Name
