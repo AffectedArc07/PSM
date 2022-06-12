@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PSM.Core.Core.Auth;
+using PSM.Core.Auth;
 using PSM.Core.Models.Server;
 
 namespace PSM.Core.Controllers.API {

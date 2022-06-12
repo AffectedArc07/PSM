@@ -1,11 +1,11 @@
 ﻿using System.Security.Cryptography;
 using Microsoft.OpenApi.Extensions;
 using Namotion.Reflection;
-using PSM.Core.Core.Database.Tables;
-using PSM.Core.Core.Database.Tables.Abstract;
+using PSM.Core.Database.Tables;
+using PSM.Core.Database.Tables.Abstract;
 using PSM.Core.Models.API;
 
-namespace PSM.Core.Core {
+namespace PSM.Core {
   public static class Constants {
     public static class Config {
       //todo: make this not a fucking static class in the constants folder
@@ -80,6 +80,12 @@ namespace PSM.Core.Core {
                                               Id          = (int)permission,
                                             };
     }
+
+    public static InstanceInformationModel GetInformationModel(this Instance instance) =>
+      new() {
+              ID   = instance.Id,
+              Name = instance.Name
+            };
   }
 
   public enum PSMPermission {
@@ -98,7 +104,7 @@ namespace PSM.Core.Core {
     /// Modify the permissions of a user
     /// </summary>
     UserEdit = 3,
-    
+
     /// <summary>
     /// Enable or disable a user
     /// </summary>

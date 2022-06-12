@@ -3,9 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
-using PSM.Core.Core;
-using PSM.Core.Core.Auth;
-using PSM.Core.Core.Database;
+using PSM.Core.Auth;
+using PSM.Core.Database;
 using Tomlyn.Extensions.Configuration;
 
 namespace PSM.Core {

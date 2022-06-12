@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text;
-using PSM.Core.Core.Auth;
-using PSM.Core.Core.Database;
-using PSM.Core.Core.Database.Tables;
+using PSM.Core.Auth;
+using PSM.Core.Database;
+using PSM.Core.Database.Tables;
 using PSM.Core.Models.Auth;
 
 namespace PSM.Core.Controllers.API {

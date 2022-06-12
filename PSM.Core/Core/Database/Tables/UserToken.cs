@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using JetBrains.Annotations;
 
-namespace PSM.Core.Core.Database.Tables;
+namespace PSM.Core.Database.Tables;
 
 [Table("UserTokens"), UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class UserToken {

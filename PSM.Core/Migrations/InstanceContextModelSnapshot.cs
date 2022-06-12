@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PSM.Core.Core.Database;
+using PSM.Core.Database;
 
 #nullable disable
 
@@ -18,26 +18,32 @@ namespace PSM.Core.Migrations
                 .HasAnnotation("ProductVersion", "6.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("PSM.Core.Core.Instance", b =>
+            modelBuilder.Entity("PSM.Core.Database.Tables.Instance", b =>
                 {
-                    b.Property<int>("id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("id")
+                        .HasColumnOrder(0);
 
-                    b.Property<string>("instance_path")
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("enabled");
+
+                    b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)")
+                        .HasColumnName("name");
 
-                    b.Property<bool>("is_active")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("name")
+                    b.Property<string>("RootPath")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("longtext")
+                        .HasColumnName("root");
 
-                    b.HasKey("id");
+                    b.HasKey("Id");
 
-                    b.ToTable("Instances");
+                    b.ToTable("instances");
                 });
 #pragma warning restore 612, 618
         }

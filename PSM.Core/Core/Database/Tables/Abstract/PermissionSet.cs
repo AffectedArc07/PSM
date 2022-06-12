@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PSM.Core.Core.Database.Tables.Abstract;
+namespace PSM.Core.Database.Tables.Abstract;
 
 public abstract class PermissionSet {
   [Key, Required, Column(Order = 0), DefaultValue(1)]

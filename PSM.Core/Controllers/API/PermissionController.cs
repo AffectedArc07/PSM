@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PSM.Core.Core;
-using PSM.Core.Core.Auth;
-using PSM.Core.Core.Database;
+using PSM.Core.Auth;
+using PSM.Core.Database;
 using PSM.Core.Models.API;
 
 namespace PSM.Core.Controllers.API;

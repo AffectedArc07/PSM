@@ -1,11 +1,11 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using PSM.Core.Core.Database;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using PSM.Core.Core.Database.Tables;
+using Microsoft.IdentityModel.Tokens;
+using PSM.Core.Database;
+using PSM.Core.Database.Tables;
 using PSM.Core.Models.Auth;
 
-namespace PSM.Core.Core.Auth {
+namespace PSM.Core.Auth {
   public interface IJWTRepository {
     Task<ClientTokenModel> Authenticate(User           user, HttpContext context);
     Task<User?>            UserFromContext(HttpContext context);

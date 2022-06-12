@@ -1,9 +1,9 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using PSM.Core.Core.Database.Tables;
+using PSM.Core.Database.Tables;
 
-namespace PSM.Core.Core.Database;
+namespace PSM.Core.Database;
 
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class UserContext : DbContext {

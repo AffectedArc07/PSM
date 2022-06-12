@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using JetBrains.Annotations;
 
-namespace PSM.Core.Core.Database.Tables;
+namespace PSM.Core.Database.Tables;
 
 [Table("Users"), UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class User {

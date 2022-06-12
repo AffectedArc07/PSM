@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PSM.Core.Core.Database.Tables;
+namespace PSM.Core.Database.Tables;
 
 [Table("PermissionGlobal")]
 public class GlobalPermissionSet {

@@ -1,7 +1,8 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using PSM.Core.Database.Tables;
 
-namespace PSM.Core.Core.Database;
+namespace PSM.Core.Database;
 
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class InstanceContext : DbContext {
