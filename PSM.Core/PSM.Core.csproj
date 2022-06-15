@@ -7,7 +7,6 @@
     <GenerateRuntimeConfigurationFiles>True</GenerateRuntimeConfigurationFiles>
     <UserSecretsId>fd31e459-7f60-4688-8e24-f9d6042e8a14</UserSecretsId>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-	<Configurations>Debug;Release;DebugNoWebpanel</Configurations>
     <SpaRoot>ClientApp\</SpaRoot>
 	<SpaProxyLaunchCommand>npm run start</SpaProxyLaunchCommand>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
@@ -75,7 +74,7 @@
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
   </Target>
 
-  <Target Name="PublishRunWebpack" AfterTargets="AfterBuild">
+  <Target Name="PublishRunWebpack" AfterTargets="AfterBuild" Condition=" '$(Configuration)' != 'No Web Panel' ">
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
