@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
 using Microsoft.OpenApi.Extensions;
 using Namotion.Reflection;
 using PSM.Core.Database.Tables;
@@ -62,6 +63,8 @@ namespace PSM.Core {
       return forwardedFor;
     }
 
+    public static int WatchdogLoopbackPort = 5562;
+
     public static UserInformationModel GetInformationModel(this User user) {
       return new UserInformationModel {
                                         Enabled  = user.Enabled,
@@ -86,6 +89,14 @@ namespace PSM.Core {
               ID   = instance.Id,
               Name = instance.Name
             };
+
+    public static byte[] GetUnicodeBytes(this string str) {
+      return Encoding.Unicode.GetBytes(str);
+    }
+
+    public static string GetUnicodeString(this byte[] bytes) {
+      return Encoding.Unicode.GetString(bytes.AsSpan());
+    }
   }
 
   public enum PSMPermission {
