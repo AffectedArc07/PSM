@@ -45,15 +45,6 @@ namespace PSM.Core {
                                                      startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
                                                    }
                                                  });
-      builder.Services.AddDbContext<InstanceContext>(options => {
-                                                       try {
-                                                         options.UseMySql(conStr, ServerVersion.AutoDetect(conStr));
-                                                         startup_logger.LogInformation("User Context established");
-                                                       } catch(MySqlException permEx) {
-                                                         startup_logger.LogCritical("Failed to establish User Context");
-                                                         startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
-                                                       }
-                                                     });
       builder.Services.AddDbContext<PermissionContext>(options => {
                                                          try {
                                                            options.UseMySql(conStr, ServerVersion.AutoDetect(conStr));
@@ -63,6 +54,15 @@ namespace PSM.Core {
                                                            startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
                                                          }
                                                        });
+      builder.Services.AddDbContext<InstanceContext>(options => {
+                                                       try {
+                                                         options.UseMySql(conStr, ServerVersion.AutoDetect(conStr));
+                                                         startup_logger.LogInformation("User Context established");
+                                                       } catch(MySqlException permEx) {
+                                                         startup_logger.LogCritical("Failed to establish User Context");
+                                                         startup_logger.LogCritical(" Inner Exception: {MySqlEx}", permEx.ToString());
+                                                       }
+                                                     });
 
       // Add services
       builder.Services.AddMvc().AddNewtonsoftJson();
