@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <Platforms>AnyCPU;x86</Platforms>
+        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+        <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DNNE" Version="1.0.32" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\byondsharp\ByondSharpGenerator\ByondSharpGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\byondsharp\ByondSharp\ByondSharp.csproj"/>
+    </ItemGroup>
+
+    <Target Name="MoveBYONDFiles" AfterTargets="Build">
+        <ItemGroup>
+            <DllFiles Include="$(OutDir)\*.dll" />
+            <DllFiles Include="$(OutDir)\*.runtimeconfig.json" />
+            <CleanupFiles Include="$(OutDir)\copy_to_byond\*.*" />
+        </ItemGroup>
+        <Delete Files="@(CleanupFiles)" />
+        <Copy SourceFiles="@(DllFiles)" DestinationFolder="$(OutDir)copy_to_byond" />
+    </Target>
+</Project>
