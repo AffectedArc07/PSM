@@ -10,6 +10,8 @@
     <SpaRoot>ClientApp\</SpaRoot>
 	<SpaProxyLaunchCommand>npm run start</SpaProxyLaunchCommand>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+    <Configurations>Debug;No Web Panel;Release</Configurations>
+    <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
