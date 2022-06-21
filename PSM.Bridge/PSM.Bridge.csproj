@@ -24,6 +24,6 @@
             <CleanupFiles Include="$(OutDir)\copy_to_byond\*.*" />
         </ItemGroup>
         <Delete Files="@(CleanupFiles)" />
-        <Copy SourceFiles="@(DllFiles)" DestinationFolder="..\..\psm_bridge_output" />
+        <Copy SourceFiles="@(DllFiles)" DestinationFolder="..\..\psm_bridge_api" />
     </Target>
 </Project>
