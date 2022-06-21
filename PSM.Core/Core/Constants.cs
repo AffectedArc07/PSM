@@ -97,6 +97,8 @@ namespace PSM.Core {
     public static string GetUnicodeString(this byte[] bytes) {
       return Encoding.Unicode.GetString(bytes.AsSpan());
     }
+
+    public static string PSMRootDirectory = "C:\\PSM\\";
   }
 
   public enum PSMPermission {

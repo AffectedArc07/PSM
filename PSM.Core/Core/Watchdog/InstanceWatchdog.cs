@@ -214,9 +214,9 @@ public class InstanceWatchdog {
     }
   }
 
-  public async Task DreamDaemon_Launch() {
+  public Task DreamDaemon_Launch() {
     if(DdProcessID != -1)
-      return; // already started
+      return Task.CompletedTask; // already started
 
     var root = new DirectoryInfo(InstanceActual.RootPath);
     if(!root.Exists)
@@ -253,6 +253,7 @@ public class InstanceWatchdog {
     DdProcessID    = ddP.Id;
     DdProcessStart = ddP.StartTime;
     _savePersistenceDD();
+    return Task.CompletedTask;
   }
 
   public async Task DreamDaemon_Shutdown() {
@@ -273,7 +274,7 @@ public class InstanceWatchdog {
       }
 
       if(!ddProcess.WaitForExit(5000)) {
-        // SIGTERM failed, send SIGHALT
+        // SIGTERM failed
         Console.WriteLine("Failed to close DreamDaemon aggressively");
         ddProcess.Kill(true);
       }
@@ -336,6 +337,17 @@ public class InstanceWatchdog {
     await writer.WriteAsync(InstanceActual.DreamDaemonPSMKey);
     await writer.FlushAsync();
     await writer.DisposeAsync();
+
+    var bridgeApi = new FileInfo(Path.Join(ddLive.FullName, "PSM.BridgeNE.dll"));
+    if(bridgeApi.Exists)
+      bridgeApi.Delete();
+    var bridgeApiInstall = new DirectoryInfo(Path.Join(Constants.PSMRootDirectory, "Install", "psm_bridge_api"));
+    if(!bridgeApiInstall.Exists)
+      throw new DirectoryNotFoundException(nameof(bridgeApiInstall));
+    var bridgeApiLink = bridgeApiInstall.GetFiles("PSM.BridgeNE.dll").FirstOrDefault();
+    if(bridgeApiLink is null)
+      throw new FileNotFoundException(nameof(bridgeApiLink));
+    bridgeApi.CreateAsSymbolicLink(bridgeApiLink.FullName);
 
     return dmP.ExitCode == 0;
   }
