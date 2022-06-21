@@ -1,3 +1,6 @@
 [submodule "byondsharp"]
 	path = byondsharp
 	url = https://github.com/bobbahbrown/ByondSharp.git
+[submodule "ByondSharp"]
+	path = ByondSharp
+	url = git@github.com:bobbahbrown/ByondSharp.git
