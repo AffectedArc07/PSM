@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSM.Bridge", "PSM.Bridge\PSM.Bridge.csproj", "{AE51264F-6DCA-4586-8A7E-B88CE75016E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByondSharp", "byondsharp\ByondSharp\ByondSharp.csproj", "{7CBD3AEF-C8A3-46B4-8083-9DE23295ECFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByondSharp", "ByondSharp\ByondSharp\ByondSharp.csproj", "{7CBD3AEF-C8A3-46B4-8083-9DE23295ECFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByondSharpGenerator", "byondsharp\ByondSharpGenerator\ByondSharpGenerator.csproj", "{56CE20D6-1772-4050-932B-E2FE0F3C5404}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByondSharpGenerator", "ByondSharp\ByondSharpGenerator\ByondSharpGenerator.csproj", "{56CE20D6-1772-4050-932B-E2FE0F3C5404}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

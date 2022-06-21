@@ -13,8 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\byondsharp\ByondSharpGenerator\ByondSharpGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-        <ProjectReference Include="..\byondsharp\ByondSharp\ByondSharp.csproj" />
+        <ProjectReference Include="..\ByondSharp\ByondSharpGenerator\ByondSharpGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\ByondSharp\ByondSharp\ByondSharp.csproj" />
     </ItemGroup>
 
     <Target Name="MoveBYONDFiles" AfterTargets="Build">
@@ -24,6 +24,6 @@
             <CleanupFiles Include="$(OutDir)\copy_to_byond\*.*" />
         </ItemGroup>
         <Delete Files="@(CleanupFiles)" />
-        <Copy SourceFiles="@(DllFiles)" DestinationFolder="..\" />
+        <Copy SourceFiles="@(DllFiles)" DestinationFolder="..\..\psm_bridge_output" />
     </Target>
 </Project>
