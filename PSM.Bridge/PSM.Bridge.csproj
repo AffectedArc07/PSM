@@ -9,11 +9,12 @@
 
     <ItemGroup>
         <PackageReference Include="DNNE" Version="1.0.32" />
+        <PackageReference Include="JetBrains.Annotations" Version="2022.1.0" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\byondsharp\ByondSharpGenerator\ByondSharpGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-        <ProjectReference Include="..\byondsharp\ByondSharp\ByondSharp.csproj"/>
+        <ProjectReference Include="..\byondsharp\ByondSharp\ByondSharp.csproj" />
     </ItemGroup>
 
     <Target Name="MoveBYONDFiles" AfterTargets="Build">
@@ -23,6 +24,6 @@
             <CleanupFiles Include="$(OutDir)\copy_to_byond\*.*" />
         </ItemGroup>
         <Delete Files="@(CleanupFiles)" />
-        <Copy SourceFiles="@(DllFiles)" DestinationFolder="$(OutDir)copy_to_byond" />
+        <Copy SourceFiles="@(DllFiles)" DestinationFolder="..\" />
     </Target>
 </Project>
