@@ -25,6 +25,15 @@ public class Instance {
   [Column("dd_port"), Required, DefaultValue(2577)]
   public int DreamDaemonPort { get; set; } = 2577;
 
+  [Column("dd_trust_level"), Required, DefaultValue(TrustLevel.Trusted)]
+  public int DreamDaemonTrustLevel { get; set; } = TrustLevel.Trusted;
+
+  [Column("dd_visiblity"), Required, DefaultValue(Visibility.Invisible)]
+  public int DreamDaemonVisibility { get; set; } = Visibility.Invisible;
+
+  [Column("dd_params"), Required, DefaultValue("")]
+  public string DreamDaemonParams { get; set; } = "";
+
   /// <summary>
   /// This is in seconds
   /// </summary>

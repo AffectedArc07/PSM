@@ -153,6 +153,9 @@ public class InstanceWatchdog {
   private bool  _hbReattaching;
 
   private async Task HeartbeatLoop() {
+    if(InstanceActual.DreamDaemonTrustLevel != TrustLevel.Trusted)
+      throw new NotSupportedException();
+
     var hbFails = 0;
     Console.WriteLine($"Launching HBLoop with interval of {InstanceActual.DreamDaemonHeartbeatInterval}");
     while(InstanceStarted) {
@@ -171,7 +174,10 @@ public class InstanceWatchdog {
       Console.WriteLine($"heartbeat failure #{hbFails}");
       switch(hbFails) {
         case> 5:
-          // kill and restart
+          _hbReattaching = true;
+          await DreamDaemon_Shutdown();
+          await Task.Delay(250, CancellationToken.None);
+          await DreamDaemon_Launch();
           break;
         case> 4:
           _hbReattaching = true;
@@ -181,6 +187,8 @@ public class InstanceWatchdog {
           break;
       }
     }
+
+    Console.WriteLine("Heartbeat exited");
   }
 
   private static string _dictToData(Dictionary<string, string> dict) {
@@ -192,36 +200,9 @@ public class InstanceWatchdog {
     return json + "}";
   }
 
-  public static void Main() {
-    Constants.ConstantInit();
-    if(!Constants.ProcessRunsAsAdmin) {
-      Console.WriteLine("Program must be ran as Admin!");
-      Environment.Exit(-1);
-      return;
-    }
-
-    var _ = new InstanceWatchdog(new Instance {
-                                                Id                           = 1,
-                                                DreamDaemonAddress           = "127.0.0.1",
-                                                DreamDaemonPort              = 5565,
-                                                DreamDaemonHeartbeatInterval = 2,
-                                                RootPath                     = "C:/PSM/TestInstance/",
-                                                DreamDaemonDmeName           = "testinstance.dme",
-                                              }, null!);
-    if(!_.DreamDaemon_Deploy().GetAwaiter().GetResult()) {
-      Console.WriteLine("Failed to deploy");
-      return;
-    }
-
-    _.DreamDaemon_Launch().Wait();
-    Thread.Sleep(1000);
-    if(!_.Attach())
-      Console.WriteLine("Failed to attach to instance");
-    Thread.Sleep(10000);
-    _.DreamDaemon_Shutdown().Wait();
-  }
-
   protected async Task<string?> SendPSMTopic(string topic, string data = "") {
+    if(InstanceActual.DreamDaemonTrustLevel != TrustLevel.Trusted)
+      throw new NotSupportedException();
     try {
       using var ddClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
       await ddClient.ConnectAsync(new IPEndPoint(IPAddress.Parse(InstanceActual.DreamDaemonAddress), InstanceActual.DreamDaemonPort), InstanceCancellationToken);
@@ -312,11 +293,19 @@ public class InstanceWatchdog {
     DdProcessStart = ddP.StartTime;
     _savePersistenceDD();
     InstanceStarted = true;
+
+    if(!Attach())
+      Console.WriteLine("Failed to attach to instance");
+
     return Task.CompletedTask;
   }
 
   public async Task DreamDaemon_Shutdown() {
+    Detach();
     using var token = WatchdogToken.StartWork();
+
+    if(DdProcessID == -1)
+      return;
 
     var ddProcess = Process.GetProcessById(DdProcessID);
     if(ddProcess.StartTime.Ticks != DdProcessStart.Ticks)
@@ -351,6 +340,7 @@ public class InstanceWatchdog {
   }
 
   public async Task<bool> DreamDaemon_Deploy() {
+    Console.WriteLine("Deploying");
     var root = new DirectoryInfo(InstanceActual.RootPath);
     if(!root.Exists)
       throw new DirectoryNotFoundException("root");
@@ -412,7 +402,15 @@ public class InstanceWatchdog {
   }
 
   private string _dd_args() {
-    return@$"{InstanceActual.DreamDaemonDmeName[..^4]}.dmb {InstanceActual.DreamDaemonPort} -trusted";
+    var ddP  = InstanceActual.DreamDaemonParams;
+    var argP = string.IsNullOrWhiteSpace(ddP) ? "" : $" -params \"{ddP}\"";
+    return@$"
+{InstanceActual.DreamDaemonDmeName[..^4]}.dmb
+ {InstanceActual.DreamDaemonPort}
+ {TrustLevel.TrustLevelAsArg(InstanceActual.DreamDaemonTrustLevel)}
+ {Visibility.VisibilityAsArg(InstanceActual.DreamDaemonVisibility)}
+ {argP}
+".Replace("\n", "");
   }
 
   private string _dm_args() {
@@ -440,10 +438,17 @@ public class InstanceWatchdog {
     DdProcessID    = BitConverter.ToInt32(buffPid);
     DdProcessStart = new DateTime(BitConverter.ToInt64(buffDto));
 
+    Process? process = null;
     try {
-      Process.GetProcessById(DdProcessID).Close();
-    } catch(ArgumentException) {
+      process = Process.GetProcessById(DdProcessID);
+      if(DdProcessStart.Ticks != process.StartTime.Ticks)
+        DdProcessID = -1;
+      if(process.HasExited)
+        DdProcessID = -1;
+    } catch {
       DdProcessID = -1;
+    } finally {
+      process?.Close();
     }
   }
 
@@ -467,15 +472,36 @@ public class InstanceWatchdog {
     stream.Dispose();
   }
 
+  private int GracefulAction = GracefulActions.Restart;
+
   private string HandleBridgeTopic(string topic, List<string> data) {
     Console.WriteLine($"Bridge Topic: {topic}");
     switch(topic) {
       case"world_shutdown":
-        Console.WriteLine("World Stopped");
+        switch(GracefulAction) {
+          case GracefulActions.Shutdown:
+            Task.Delay(500, CancellationToken.None)
+                .GetAwaiter()
+                .OnCompleted(() => DreamDaemon_Shutdown().Wait(CancellationToken.None));
+            return"world_shutdown_abort";
+          case GracefulActions.Restart:
+            Task.Delay(500, CancellationToken.None)
+                .GetAwaiter()
+                .OnCompleted(() => {
+                               _hbReattaching = true;
+                               DreamDaemon_Shutdown()
+                                .GetAwaiter()
+                                .OnCompleted(() => {
+                                               DreamDaemon_Launch().Wait(CancellationToken.None);
+                                               _hbReattaching = false;
+                                             });
+                             });
+            return"world_shutdown_abort";
+        }
+
         break;
 
       case"world_reboot":
-        Console.WriteLine("World Rebooted");
         break;
 
       default:

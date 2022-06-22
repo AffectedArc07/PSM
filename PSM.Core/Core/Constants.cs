@@ -299,4 +299,40 @@ namespace PSM.Core {
     /// </summary>
     InstanceDMTimeout = 33,
   }
+
+  public static class GracefulActions {
+    public const int NoAction = 1;
+    public const int Restart  = 2;
+    public const int Shutdown = 3;
+  }
+
+  public static class TrustLevel {
+    public const int Trusted   = 1;
+    public const int Safe      = 2;
+    public const int UltraSafe = 3;
+
+    public static string TrustLevelAsArg(int trustLevel) {
+      return trustLevel switch {
+               Trusted   => "-trusted",
+               Safe      => "-safe",
+               UltraSafe => "-ultrasafe",
+               _         => throw new ArgumentOutOfRangeException(nameof(trustLevel))
+             };
+    }
+  }
+
+  public static class Visibility {
+    public const int Invisible = 1;
+    public const int Private   = 2;
+    public const int Public    = 3;
+
+    public static string VisibilityAsArg(int visibility) {
+      return visibility switch {
+               Invisible => "-invisible",
+               Private   => "-private",
+               Public    => "-public",
+               _         => throw new ArgumentOutOfRangeException(nameof(visibility))
+             };
+    }
+  }
 }
