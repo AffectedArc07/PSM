@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using Microsoft.OpenApi.Extensions;
 using Namotion.Reflection;
@@ -8,6 +9,27 @@ using PSM.Core.Models.API;
 
 namespace PSM.Core {
   public static class Constants {
+    private static bool constantsInit = false;
+
+    public static void ConstantInit() {
+      if(constantsInit) throw new InvalidOperationException();
+      constantsInit = true;
+      if(Environment.OSVersion.Platform == PlatformID.Win32NT) WindowsInit();
+      else OtherInit();
+    }
+
+    private static void WindowsInit() {
+#pragma warning disable CA1416
+      ProcessRunsAsAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+#pragma warning restore CA1416
+    }
+
+    private static void OtherInit() {
+      throw new NotSupportedException();
+    }
+
+    public static bool ProcessRunsAsAdmin;
+
     public static class Config {
       //todo: make this not a fucking static class in the constants folder
       public static bool ReverseProxyEnabled = true;
@@ -63,7 +85,7 @@ namespace PSM.Core {
       return forwardedFor;
     }
 
-    public static int WatchdogLoopbackPort = 5562;
+    public static int WatchdogLoopbackPort = 5515;
 
     public static UserInformationModel GetInformationModel(this User user) {
       return new UserInformationModel {
