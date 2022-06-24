@@ -179,7 +179,10 @@ public class InstanceWatchdog {
 
     var hbFails = 0;
     Console.WriteLine($"Launching HBLoop with interval of {InstanceActual.DreamDaemonHeartbeatInterval}");
+    var periodic = new PeriodicTimer(TimeSpan.FromSeconds(InstanceActual.DreamDaemonHeartbeatInterval));
     while(InstanceStarted) {
+      if(!await periodic.WaitForNextTickAsync(InstanceCancellationToken))
+        break;
       await Task.Delay(TimeSpan.FromSeconds(InstanceActual.DreamDaemonHeartbeatInterval), InstanceCancellationToken);
       if(!InstanceStarted)
         break;
@@ -336,6 +339,9 @@ public class InstanceWatchdog {
 
     Detach(); // we detach at the end because when we Detach we kill and disallow all further actions, including topic calls
     InstanceStarted = false;
+    token.Finish();
+    Detach(); // we detach at the end because when we Detach we kill and disallow all further actions, including topic calls
+    DdProcessID = -1;
     DdProcessID     = -1;
     _savePersistenceDD();
   }
