@@ -12,7 +12,7 @@ public class InstanceWatchdog {
   private static readonly Dictionary<int, InstanceWatchdog> Watchdogs = new();
   private static          TcpListener?                      _loopbackListener;
 
-  private bool WaitingDDConfirmation;
+  private bool WaitingDDConfirmation, WaitingDDShutdown;
 
   private static async Task StartLoopback() {
     async Task HandleClient(TcpClient client) {
@@ -126,7 +126,7 @@ public class InstanceWatchdog {
     var wdData = new Dictionary<string, string> {
                                                   ["wd_id"] = $"{InstanceActual.Id}"
                                                 };
-    SendPSMTopic("watchdog_attach", _dictToData(wdData)).GetAwaiter().GetResult();
+    SendPSMTopic("watchdog_detach", _dictToData(wdData)).GetAwaiter().GetResult();
     if(_hbReattaching)
       return;
 
@@ -221,7 +221,7 @@ public class InstanceWatchdog {
     return json + "}";
   }
 
-  protected async Task<string?> SendPSMTopic(string topic, string data = "", int? portOverride = null) {
+  public async Task<string?> SendPSMTopic(string topic, string data = "", int? portOverride = null) {
     if(InstanceActual.DreamDaemonTrustLevel != TrustLevel.Trusted)
       throw new NotSupportedException();
     try {
@@ -300,7 +300,6 @@ public class InstanceWatchdog {
   }
 
   public async Task DreamDaemon_Shutdown() {
-    Detach();
     using var token = WatchdogToken.StartWork();
 
     if(DdProcessID == -1)
@@ -310,10 +309,12 @@ public class InstanceWatchdog {
     if(ddProcess.StartTime.Ticks != DdProcessStart.Ticks)
       throw new ApplicationException("failed to validate start time information");
 
+    WaitingDDShutdown = true;
+    InstanceStarted   = false;
+    // send topic will always return before we can set DD to true,
+    // which means we want to prevent a race condition with BYOND telling us they're done shutting down
     if(await SendPSMTopic("world_shutdown") == "psm_ok") {
-      InstanceStarted = false;
-      Thread.Sleep(5000); // give it time to perform shutdown tasks if we get the expected response
-      ddProcess.Kill(true);
+      while(WaitingDDShutdown) Thread.Yield();
     } else {
       if(!ddProcess.WaitForExit(5000)) {
         // topic call failed
@@ -333,6 +334,7 @@ public class InstanceWatchdog {
       }
     }
 
+    Detach(); // we detach at the end because when we Detach we kill and disallow all further actions, including topic calls
     InstanceStarted = false;
     DdProcessID     = -1;
     _savePersistenceDD();
@@ -393,6 +395,11 @@ public class InstanceWatchdog {
     Console.WriteLine($"Bridge Topic: {topic}");
     switch(topic) {
       case"world_shutdown":
+        if(WaitingDDShutdown) {
+          WaitingDDShutdown = false;
+          break;
+        }
+
         switch(InstanceActual.DreamDaemonGraceful) {
           case GracefulActions.Shutdown:
             Task.Delay(500, CancellationToken.None)
