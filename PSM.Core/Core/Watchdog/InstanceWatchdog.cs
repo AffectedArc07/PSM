@@ -318,6 +318,7 @@ public class InstanceWatchdog {
     // which means we want to prevent a race condition with BYOND telling us they're done shutting down
     if(await SendPSMTopic("world_shutdown") == "psm_ok") {
       while(WaitingDDShutdown) Thread.Yield();
+      ddProcess.Kill(true);
     } else {
       if(!ddProcess.WaitForExit(5000)) {
         // topic call failed

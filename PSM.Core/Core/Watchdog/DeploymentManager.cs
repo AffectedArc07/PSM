@@ -50,6 +50,7 @@ public class DeploymentManager {
     var deployFailed = dmP.ExitCode != 0;
     if(deployFailed) {
       Console.WriteLine("!Deploy Failed!");
+      Console.WriteLine(dmP.StandardOutput.ReadToEnd());
     } else {
       // create key file and link bridge dlls
       Util.CopyDirectory(new DirectoryInfo(PSMDirectory.BridgeDllInstall.FullName), new DirectoryInfo(Path.Join(deployment.FullName, "psm_bridge_api")), true);
