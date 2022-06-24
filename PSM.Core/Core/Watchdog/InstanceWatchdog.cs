@@ -3,17 +3,18 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using NuGet.ProjectModel;
 using PSM.Core.Database;
 using PSM.Core.Database.Tables;
 
 namespace PSM.Core.Watchdog;
 
 public class InstanceWatchdog {
-  protected static readonly Dictionary<int, InstanceWatchdog> Watchdogs = new();
-  private static            TcpListener?                      _loopbackListener;
+  private static readonly Dictionary<int, InstanceWatchdog> Watchdogs = new();
+  private static          TcpListener?                      _loopbackListener;
 
-  public static async Task StartLoopback() {
+  private bool WaitingDDConfirmation;
+
+  private static async Task StartLoopback() {
     async Task HandleClient(TcpClient client) {
       await Task.Run(() => {
                        try {
@@ -83,8 +84,9 @@ public class InstanceWatchdog {
     _loopbackListener = null;
   }
 
-  protected InstanceContext InstanceContext;
-  protected Instance        InstanceActual;
+  protected InstanceContext   InstanceContext;
+  public    Instance          InstanceActual;
+  public    DeploymentManager InstanceDeployer;
 
   protected CancellationToken InstanceCancellationToken;
 
@@ -105,10 +107,18 @@ public class InstanceWatchdog {
       DdProcessStart = existing.DdProcessStart;
     }
 
-    InstanceContext = holder;
-    InstanceActual  = target;
+    InstanceContext  = holder;
+    InstanceActual   = target;
+    InstanceDeployer = new DeploymentManager(this);
     _getPersistenceDD();
     Watchdogs[target.Id] = this;
+  }
+
+  ~InstanceWatchdog() {
+    if(Watchdogs.TryGetValue(InstanceActual.Id, out var linked)) {
+      if(linked == this)
+        Watchdogs.Remove(InstanceActual.Id);
+    }
   }
 
   public void Detach() {
@@ -121,7 +131,12 @@ public class InstanceWatchdog {
       return;
 
     WatchdogAttachSource.Cancel();
-    _heartbeatTask.Wait(default(CancellationToken));
+    try {
+      _heartbeatTask.Wait(default(CancellationToken));
+    } catch(AggregateException e) {
+      if(e.InnerException is not TaskCanceledException)
+        throw;
+    }
   }
 
   public bool Attach() {
@@ -135,6 +150,7 @@ public class InstanceWatchdog {
       _heartbeatTask            = HeartbeatLoop();
     }
 #pragma warning disable CS4014
+    WaitingDDConfirmation = true;
     StartLoopback();
     Thread.Sleep(1000); // give it a second to initialize loopback
 #pragma warning restore CS4014
@@ -145,7 +161,12 @@ public class InstanceWatchdog {
                                                 };
     var attachData = _dictToData(wdData);
     var attachResp = SendPSMTopic("watchdog_attach", attachData).GetAwaiter().GetResult();
-    if(attachResp != "psm_ok") Console.WriteLine("Failed to register loopback port on Instance-{0}", InstanceActual.Id);
+    if(attachResp != "psm_ok") {
+      Console.WriteLine("Failed to register loopback port on Instance-{0}", InstanceActual.Id);
+    } else
+      while(WaitingDDConfirmation)
+        Thread.Yield();
+
     return true;
   }
 
@@ -200,12 +221,12 @@ public class InstanceWatchdog {
     return json + "}";
   }
 
-  protected async Task<string?> SendPSMTopic(string topic, string data = "") {
+  protected async Task<string?> SendPSMTopic(string topic, string data = "", int? portOverride = null) {
     if(InstanceActual.DreamDaemonTrustLevel != TrustLevel.Trusted)
       throw new NotSupportedException();
     try {
       using var ddClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-      await ddClient.ConnectAsync(new IPEndPoint(IPAddress.Parse(InstanceActual.DreamDaemonAddress), InstanceActual.DreamDaemonPort), InstanceCancellationToken);
+      await ddClient.ConnectAsync(new IPEndPoint(IPAddress.Parse(InstanceActual.DreamDaemonAddress), portOverride ?? InstanceActual.DreamDaemonPort), InstanceCancellationToken);
       ddClient.ReceiveTimeout = ddClient.SendTimeout = 5000;
 
       var psmHeader = _dictToData(new Dictionary<string, string> {
@@ -257,36 +278,14 @@ public class InstanceWatchdog {
       return Task.CompletedTask; // already started
     }
 
-    var root = new DirectoryInfo(InstanceActual.RootPath);
-    if(!root.Exists)
-      throw new DirectoryNotFoundException("root");
+    if(!InstanceActual.DreamDaemonDeployTarget.Equals(InstanceActual.DreamDaemonDeployActive))
+      InstanceDeployer.SetActiveDeployment(InstanceActual.DreamDaemonDeployTarget);
 
-    var byondInstall = new DirectoryInfo(Path.Join(root.FullName, "BYOND"));
-    if(!byondInstall.Exists)
-      throw new DirectoryNotFoundException("ddInstall");
-
-    var byondBin = new DirectoryInfo(Path.Join(byondInstall.FullName, "bin"));
-    if(!byondInstall.Exists)
-      throw new DirectoryNotFoundException("ddBin");
-
-    var ddLive = new DirectoryInfo(Path.Join(root.FullName, "Live"));
-    if(!ddLive.Exists)
-      throw new DirectoryNotFoundException("ddLive");
-
-    var ddDme = ddLive.GetFiles(InstanceActual.DreamDaemonDmeName).FirstOrDefault();
-    if(ddDme is null || !ddDme.Exists)
-      throw new FileNotFoundException("ddDme");
-    if(ddDme.Extension != ".dme")
-      throw new FileFormatException("ddDme");
-
-    var ddExe = new FileInfo(Path.Join(byondBin.FullName, "dreamdaemon.exe"));
-    if(!ddExe.Exists)
-      throw new FileNotFoundException("ddExe");
-
-    var ddSi = new ProcessStartInfo(ddExe.FullName, _dd_args()) {
-                                                                  UseShellExecute  = true,
-                                                                  WorkingDirectory = ddLive.FullName
-                                                                };
+    var ddExe = PSMDirectory.GetBYONDFile(InstanceActual.DreamMakerVersion, "dreamdaemon.exe");
+    var ddSi = new ProcessStartInfo(ddExe.FullName, ArgHelper.DdArgs(InstanceActual)) {
+                                                                                        UseShellExecute  = true,
+                                                                                        WorkingDirectory = InstanceActual.GetInstanceRoot().InstanceLive().FullName
+                                                                                      };
 
     var ddP = Process.Start(ddSi);
     DdProcessID    = ddP.Id;
@@ -339,88 +338,8 @@ public class InstanceWatchdog {
     _savePersistenceDD();
   }
 
-  public async Task<bool> DreamDaemon_Deploy() {
-    Console.WriteLine("Deploying");
-    var root = new DirectoryInfo(InstanceActual.RootPath);
-    if(!root.Exists)
-      throw new DirectoryNotFoundException("root");
-
-    var byondInstall = new DirectoryInfo(Path.Join(root.FullName, "BYOND"));
-    if(!byondInstall.Exists)
-      throw new DirectoryNotFoundException("ddInstall");
-
-    var byondBin = new DirectoryInfo(Path.Join(byondInstall.FullName, "bin"));
-    if(!byondInstall.Exists)
-      throw new DirectoryNotFoundException("ddBin");
-
-    var ddLive = new DirectoryInfo(Path.Join(root.FullName, "Live"));
-    if(!ddLive.Exists)
-      throw new DirectoryNotFoundException("ddLive");
-
-    var ddDme = ddLive.GetFiles(InstanceActual.DreamDaemonDmeName).FirstOrDefault();
-    if(ddDme is null || !ddDme.Exists)
-      throw new FileNotFoundException("ddDme");
-    if(ddDme.Extension != ".dme")
-      throw new FileFormatException("ddDme");
-
-    var dmExe = new FileInfo(Path.Join(byondBin.FullName, "dm.exe"));
-    if(!dmExe.Exists)
-      throw new FileNotFoundException("ddExe");
-
-    var dmPs = new ProcessStartInfo(dmExe.FullName, _dm_args()) {
-                                                                  UseShellExecute        = false,
-                                                                  WorkingDirectory       = ddLive.FullName,
-                                                                  RedirectStandardOutput = true
-                                                                };
-    var dmP = Process.Start(dmPs);
-    if(dmP is null)
-      throw new ApplicationException("failed to launch DreamMaker");
-
-    dmP.WaitForExit(InstanceActual.DreamDaemonDeployTimeoutLength * 1000);
-    Console.WriteLine("Deploy Output:");
-    Console.WriteLine(await dmP.StandardOutput.ReadToEndAsync());
-    Console.WriteLine($"Exit Code: {dmP.ExitCode}");
-
-    var keyfile = new FileInfo(Path.Join(ddLive.FullName, "psm.key"));
-    if(keyfile.Exists)
-      keyfile.Delete();
-    await using var writer = keyfile.CreateText();
-    await writer.WriteAsync(InstanceActual.DreamDaemonPSMKey);
-    await writer.FlushAsync();
-    await writer.DisposeAsync();
-
-    var bridgeDllLnk = new DirectoryInfo(Path.Join(ddLive.FullName,            "psm_bridge_api"));
-    var bridgeDllDir = new DirectoryInfo(Path.Join(Constants.PSMRootDirectory, "Install", "psm_bridge_api"));
-
-    if(bridgeDllLnk.Exists && bridgeDllLnk.Attributes.HasFlag(FileAttributes.ReparsePoint))
-      bridgeDllLnk.Delete();
-    if(!bridgeDllDir.Exists)
-      throw new FileNotFoundException(nameof(bridgeDllDir));
-    Directory.CreateSymbolicLink(bridgeDllLnk.FullName, bridgeDllDir.FullName);
-
-    return dmP.ExitCode == 0;
-  }
-
-  private string _dd_args() {
-    var ddP  = InstanceActual.DreamDaemonParams;
-    var argP = string.IsNullOrWhiteSpace(ddP) ? "" : $" -params \"{ddP}\"";
-    return@$"
-{InstanceActual.DreamDaemonDmeName[..^4]}.dmb
- {InstanceActual.DreamDaemonPort}
- {TrustLevel.TrustLevelAsArg(InstanceActual.DreamDaemonTrustLevel)}
- {Visibility.VisibilityAsArg(InstanceActual.DreamDaemonVisibility)}
- {argP}
-".Replace("\n", "");
-  }
-
-  private string _dm_args() {
-    return$"-clean {InstanceActual.DreamDaemonDmeName}";
-  }
-
   private void _getPersistenceDD() {
-    var root = new DirectoryInfo(InstanceActual.RootPath);
-    if(!root.Exists)
-      throw new DirectoryNotFoundException("root");
+    var root = InstanceActual.GetInstanceRoot();
 
     var pD = new FileInfo(Path.Join(root.FullName, "persistence_dd.lock"));
     if(!pD.Exists)
@@ -453,9 +372,7 @@ public class InstanceWatchdog {
   }
 
   private void _savePersistenceDD() {
-    var root = new DirectoryInfo(InstanceActual.RootPath);
-    if(!root.Exists)
-      throw new DirectoryNotFoundException("root");
+    var root = InstanceActual.GetInstanceRoot();
 
     var pD = new FileInfo(Path.Join(root.FullName, "persistence_dd.lock"));
     if(pD.Exists)
@@ -472,13 +389,11 @@ public class InstanceWatchdog {
     stream.Dispose();
   }
 
-  private int GracefulAction = GracefulActions.Restart;
-
   private string HandleBridgeTopic(string topic, List<string> data) {
     Console.WriteLine($"Bridge Topic: {topic}");
     switch(topic) {
       case"world_shutdown":
-        switch(GracefulAction) {
+        switch(InstanceActual.DreamDaemonGraceful) {
           case GracefulActions.Shutdown:
             Task.Delay(500, CancellationToken.None)
                 .GetAwaiter()
@@ -502,6 +417,10 @@ public class InstanceWatchdog {
         break;
 
       case"world_reboot":
+        break;
+
+      case"bridge_enable":
+        WaitingDDConfirmation = false;
         break;
 
       default:

@@ -14,13 +14,13 @@ public class Instance {
   public string Name { get; set; } = "NameNotSet";
 
   [Column("root"), Required, DefaultValue("")]
-  public string RootPath { get; set; } = string.Empty;
+  public string RootID { get; set; } = string.Empty;
 
   [Column("enabled"), Required, DefaultValue(false)]
   public bool Enabled { get; set; }
 
-  [Column("dd_address"), Required, DefaultValue("localhost")]
-  public string DreamDaemonAddress { get; set; } = "localhost";
+  [Column("dd_address"), Required, DefaultValue("127.0.0.1")]
+  public string DreamDaemonAddress { get; set; } = "127.0.0.1";
 
   [Column("dd_port"), Required, DefaultValue(2577)]
   public int DreamDaemonPort { get; set; } = 2577;
@@ -28,11 +28,17 @@ public class Instance {
   [Column("dd_trust_level"), Required, DefaultValue(TrustLevel.Trusted)]
   public int DreamDaemonTrustLevel { get; set; } = TrustLevel.Trusted;
 
-  [Column("dd_visiblity"), Required, DefaultValue(Visibility.Invisible)]
+  [Column("dd_visibility"), Required, DefaultValue(Visibility.Invisible)]
   public int DreamDaemonVisibility { get; set; } = Visibility.Invisible;
 
   [Column("dd_params"), Required, DefaultValue("")]
   public string DreamDaemonParams { get; set; } = "";
+
+  [Column("dd_version"), Required, DefaultValue("")]
+  public string DreamMakerVersion { get; set; } = "";
+
+  [Column("dd_api_validate"), Required, DefaultValue(false)]
+  public bool DreamMakerApiValidation { get; set; }
 
   /// <summary>
   /// This is in seconds
@@ -51,4 +57,13 @@ public class Instance {
   /// </summary>
   [Column("dd_deploy_timeout"), Required, DefaultValue(600)]
   public int DreamDaemonDeployTimeoutLength { get; set; } = 600;
+
+  [Column("dd_active_deployment"), Required]
+  public Guid DreamDaemonDeployActive { get; set; } = Guid.Empty;
+
+  [Column("dd_target_deployment"), Required]
+  public Guid DreamDaemonDeployTarget { get; set; } = Guid.Empty;
+
+  [Column("dd_graceful"), Required, DefaultValue(0)]
+  public int DreamDaemonGraceful { get; set; } = GracefulActions.NoAction;
 }
