@@ -337,7 +337,6 @@ public class InstanceWatchdog {
       }
     }
 
-    Detach(); // we detach at the end because when we Detach we kill and disallow all further actions, including topic calls
     InstanceStarted = false;
     token.Finish();
     Detach(); // we detach at the end because when we Detach we kill and disallow all further actions, including topic calls
